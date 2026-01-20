@@ -1,3 +1,6 @@
+document.body.style.background = "red";
+alert("NEW JS IS RUNNING");
+
 /* =====================
    GLOBAL STATE
 ===================== */
