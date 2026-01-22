@@ -1,14 +1,44 @@
 body {
-  background: #0b1d2a;
+  margin: 0;
+  background: #081a2b;
   color: white;
   font-family: Arial, sans-serif;
   text-align: center;
 }
 
-canvas {
-  background: #111;
-  display: block;
-  margin: 20px auto;
-  border: 2px solid white;
+#ui {
+  padding: 10px;
 }
 
+canvas {
+  display: block;
+  margin: 0 auto;
+  background: #0f2a3f;
+  border: 3px solid #4fc3f7;
+}
+
+input, button {
+  padding: 10px;
+  font-size: 18px;
+  margin: 5px;
+}
+
+.hidden {
+  display: none;
+}
+
+#questionScreen {
+  height: 300px;
+}
+
+#questionText {
+  font-size: 28px;
+  margin: 20px;
+}
+
+#answers button {
+  display: block;
+  width: 80%;
+  margin: 10px auto;
+  font-size: 20px;
+}
