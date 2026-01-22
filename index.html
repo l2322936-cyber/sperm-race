@@ -1,65 +1,49 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="utf-8">
   <title>Sperm Race</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  <!-- LINK TO CSS -->
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
 
-  <!-- GAME HEADER -->
-  <header id="top-bar">
-    <h1>Sperm Race</h1>
-    <div id="time">Time: 0.0s</div>
-  </header>
+  <h1>Sperm Race</h1>
+  <p id="time">Time: 0s</p>
 
-  <!-- MAIN GAME AREA -->
-  <main id="game-container">
+  <!-- START SCREEN -->
+  <div id="start-screen" class="screen">
+    <p>Enter your name</p>
+    <input type="text" id="name-input">
+    <button id="start-btn">Start</button>
+  </div>
 
-    <!-- START SCREEN -->
-    <section id="start-screen" class="screen active">
-      <h2>Enter Your Name</h2>
-      <input id="name-input" type="text" placeholder="Your name" />
-      <button id="start-btn">Start Race</button>
-    </section>
+  <!-- MAZE SCREEN -->
+  <div id="maze-screen" class="screen">
+    <canvas id="maze-canvas" width="800" height="500"></canvas>
+  </div>
 
-    <!-- MAZE SCREEN -->
-    <section id="maze-screen" class="screen">
-      <h2>Navigate the Maze</h2>
-      <canvas id="maze-canvas" width="800" height="500"></canvas>
-      <p>Use WASD keys to move</p>
-    </section>
+  <!-- QUESTION SCREEN -->
+  <div id="question-screen" class="screen">
+    <h2 id="question-text"></h2>
+    <div id="answers"></div>
+  </div>
 
-    <!-- QUESTION SCREEN -->
-    <section id="question-screen" class="screen">
-      <h2 id="question-text"></h2>
-      <div id="answers"></div>
-    </section>
+  <!-- FLAPPY SCREEN -->
+  <div id="flappy-screen" class="screen">
+    <canvas id="flappy-canvas" width="800" height="500"></canvas>
+  </div>
 
-    <!-- FLAPPY SCREEN -->
-    <section id="flappy-screen" class="screen">
-      <h2>Final Challenge</h2>
-      <canvas id="flappy-canvas" width="800" height="500"></canvas>
-      <p>Press ↑ to swim</p>
-    </section>
+  <!-- END SCREEN -->
+  <div id="end-screen" class="screen">
+    <h2>Finished</h2>
+    <p id="final-time"></p>
+    <ol id="leaderboard"></ol>
+    <button id="restart-btn">Restart</button>
+  </div>
 
-    <!-- RESULTS SCREEN -->
-    <section id="end-screen" class="screen">
-      <h2>Finished!</h2>
-      <p id="final-time"></p>
-
-      <h3>Leaderboard</h3>
-      <ol id="leaderboard"></ol>
-
-      <button id="restart-btn">Restart</button>
-    </section>
-
-  </main>
-
-  <!-- LINK TO JS -->
   <script src="script.js"></script>
+
 </body>
 </html>
