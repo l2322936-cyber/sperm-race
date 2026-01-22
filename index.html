@@ -1,17 +1,40 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8">
   <title>Sperm Race</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
+
+<div id="ui">
   <h1>Sperm Race</h1>
-  <button id="startBtn">Start</button>
 
-  <canvas id="gameCanvas" width="800" height="500"></canvas>
+  <div id="startScreen">
+    <input id="nameInput" placeholder="Enter your name" />
+    <button onclick="startGame()">Start Race</button>
+    <h2>Leaderboard</h2>
+    <ul id="leaderboard"></ul>
+  </div>
 
-  <script src="script.js"></script>
+  <div id="questionScreen" class="hidden">
+    <div id="questionText"></div>
+    <div id="answers"></div>
+  </div>
+
+  <div id="endScreen" class="hidden">
+    <h2>Finished!</h2>
+    <p id="finalTime"></p>
+    <button onclick="restart()">Restart</button>
+    <h2>Leaderboard</h2>
+    <ul id="leaderboardEnd"></ul>
+  </div>
+
+  <p id="timer">Time: 0.0s</p>
+</div>
+
+<canvas id="gameCanvas" width="900" height="500"></canvas>
+
+<script src="script.js"></script>
 </body>
 </html>
-
