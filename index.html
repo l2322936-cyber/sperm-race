@@ -7,33 +7,30 @@
 </head>
 <body>
 
-<div id="ui">
+<div id="startScreen">
   <h1>Sperm Race</h1>
-
-  <div id="startScreen">
-    <input id="nameInput" placeholder="Enter your name" />
-    <button onclick="startGame()">Start Race</button>
-    <h2>Leaderboard</h2>
-    <ul id="leaderboard"></ul>
-  </div>
-
-  <div id="questionScreen" class="hidden">
-    <div id="questionText"></div>
-    <div id="answers"></div>
-  </div>
-
-  <div id="endScreen" class="hidden">
-    <h2>Finished!</h2>
-    <p id="finalTime"></p>
-    <button onclick="restart()">Restart</button>
-    <h2>Leaderboard</h2>
-    <ul id="leaderboardEnd"></ul>
-  </div>
-
-  <p id="timer">Time: 0.0s</p>
+  <input id="nameInput" placeholder="Enter your name">
+  <button onclick="startGame()">Start</button>
+  <h2>Leaderboard</h2>
+  <ul id="leaderboard"></ul>
 </div>
 
-<canvas id="gameCanvas" width="900" height="500"></canvas>
+<div id="questionScreen" class="hidden">
+  <div id="questionText"></div>
+  <div id="answers"></div>
+</div>
+
+<div id="endScreen" class="hidden">
+  <h1>Finished</h1>
+  <p id="finalTime"></p>
+  <button onclick="restart()">Restart</button>
+  <h2>Leaderboard</h2>
+  <ul id="leaderboardEnd"></ul>
+</div>
+
+<p id="timer">Time: 0.0s</p>
+
+<canvas id="gameCanvas" width="600" height="600"></canvas>
 
 <script src="script.js"></script>
 </body>
