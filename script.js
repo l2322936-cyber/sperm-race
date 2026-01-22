@@ -15,15 +15,10 @@ document.addEventListener("DOMContentLoaded", () => {
   const startBtn = document.getElementById("start-btn");
   const nameInput = document.getElementById("name-input");
 
-  if (!startBtn) {
-    console.error("Start button not found");
-    return;
-  }
-
   startBtn.addEventListener("click", () => {
     playerName = nameInput.value.trim() || "Anonymous";
-    console.log("Starting game for:", playerName);
     showScreen("maze-screen");
+    startMaze(); // canvas is accessed ONLY here
   });
 });
 
@@ -31,14 +26,28 @@ document.addEventListener("DOMContentLoaded", () => {
    SCREEN CONTROL
 ===================== */
 function showScreen(id) {
-  document.querySelectorAll(".screen").forEach(screen => {
-    screen.classList.remove("active");
-  });
+  document.querySelectorAll(".screen").forEach(s =>
+    s.classList.remove("active")
+  );
+  document.getElementById(id).classList.add("active");
+}
 
-  const next = document.getElementById(id);
-  if (next) {
-    next.classList.add("active");
-  } else {
-    console.error("Screen not found:", id);
+/* =====================
+   MAZE SETUP (SAFE)
+===================== */
+function startMaze() {
+  const canvas = document.getElementById("maze-canvas");
+  if (!canvas) {
+    console.error("Maze canvas not found");
+    return;
   }
+
+  const ctx = canvas.getContext("2d");
+
+  ctx.fillStyle = "#0a3";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  ctx.fillStyle = "#fff";
+  ctx.font = "30px Arial";
+  ctx.fillText("Maze Loaded", 300, 250);
 }
