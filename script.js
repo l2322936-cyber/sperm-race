@@ -1,37 +1,47 @@
 /* =====================
-   GLOBAL STATE
+   GLOBAL
 ===================== */
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
 
-let state = "start";
 let playerName = "";
 let time = 0;
-let timerInterval;
+let timer;
+let state = "start";
 let questionIndex = 0;
+
+/* =====================
+   TIMER
+===================== */
+function startTimer() {
+  timer = setInterval(() => {
+    time += 0.1;
+    document.getElementById("timer").textContent = `Time: ${time.toFixed(1)}s`;
+  }, 100);
+}
 
 /* =====================
    LEADERBOARD
 ===================== */
-function saveScore(name, time) {
+function saveScore() {
   const scores = JSON.parse(localStorage.getItem("scores") || "[]");
-  scores.push({ name, time });
-  scores.sort((a, b) => a.time - b.time);
-  localStorage.setItem("scores", JSON.stringify(scores.slice(0, 5)));
+  scores.push({ name: playerName, time });
+  scores.sort((a,b)=>a.time-b.time);
+  localStorage.setItem("scores", JSON.stringify(scores.slice(0,5)));
 }
 
-function loadLeaderboard(id) {
+function loadBoard(id) {
   const ul = document.getElementById(id);
   ul.innerHTML = "";
   const scores = JSON.parse(localStorage.getItem("scores") || "[]");
-  scores.forEach(s => {
-    const li = document.createElement("li");
+  scores.forEach(s=>{
+    const li=document.createElement("li");
     li.textContent = `${s.name}: ${s.time.toFixed(1)}s`;
     ul.appendChild(li);
   });
 }
 
-loadLeaderboard("leaderboard");
+loadBoard("leaderboard");
 
 /* =====================
    START
@@ -43,55 +53,77 @@ function startGame() {
   startTimer();
 }
 
-function startTimer() {
-  timerInterval = setInterval(() => {
-    time += 0.1;
-    document.getElementById("timer").textContent = `Time: ${time.toFixed(1)}s`;
-  }, 100);
-}
-
 /* =====================
-   SPERM
+   MAZE (GRID-BASED, SOLVABLE)
 ===================== */
-const sperm = {
-  x: 40,
-  y: 40,
-  speed: 5
-};
-
-/* =====================
-   MAZE (SOLVABLE)
-===================== */
-const walls = [
-  {x:0,y:0,w:900,h:20},{x:0,y:0,w:20,h:500},{x:880,y:0,w:20,h:500},{x:0,y:480,w:900,h:20},
-  {x:80,y:80,w:740,h:20},{x:80,y:80,w:20,h:340},{x:80,y:420,w:740,h:20},
-  {x:800,y:120,w:20,h:300},{x:160,y:140,w:580,h:20},
-  {x:160,y:140,w:20,h:260},{x:160,y:380,w:580,h:20}
+const tile = 30;
+const maze = [
+"####################",
+"#S     #        #  #",
+"# ### ### ###### # #",
+"#   #     #      # #",
+"### ##### # ###### #",
+"#     #   #      # #",
+"# ### # ### ###### #",
+"# #   #     #      #",
+"# # ####### ###### #",
+"# #         #    E #",
+"####################"
 ];
 
-const finish = {x:820,y:440,w:40,h:40};
+let player = { x: 1, y: 1, speed: 2 };
 
 const keys = {};
 document.addEventListener("keydown", e => keys[e.key] = true);
 document.addEventListener("keyup", e => keys[e.key] = false);
 
-function hitWall(nx, ny) {
-  return walls.some(w =>
-    nx > w.x - 10 && nx < w.x + w.w + 10 &&
-    ny > w.y - 10 && ny < w.y + w.h + 10
-  );
+function canMove(x,y) {
+  return maze[y][x] !== "#";
+}
+
+function updateMaze() {
+  let nx = player.x;
+  let ny = player.y;
+
+  if (keys["w"]) ny -= 1;
+  if (keys["s"]) ny += 1;
+  if (keys["a"]) nx -= 1;
+  if (keys["d"]) nx += 1;
+
+  if (canMove(nx,ny)) {
+    player.x = nx;
+    player.y = ny;
+  }
+
+  if (maze[player.y][player.x] === "E") {
+    showQuestion();
+  }
+}
+
+function drawMaze() {
+  for (let y=0;y<maze.length;y++) {
+    for (let x=0;x<maze[y].length;x++) {
+      if (maze[y][x]==="#") {
+        ctx.fillStyle="#1e90ff";
+        ctx.fillRect(x*tile,y*tile,tile,tile);
+      }
+    }
+  }
 }
 
 function drawSperm() {
-  ctx.fillStyle = "white";
+  const px = player.x*tile + tile/2;
+  const py = player.y*tile + tile/2;
+
+  ctx.fillStyle="white";
   ctx.beginPath();
-  ctx.ellipse(sperm.x, sperm.y, 12, 8, 0, 0, Math.PI*2);
+  ctx.ellipse(px,py,10,6,0,0,Math.PI*2);
   ctx.fill();
 
-  ctx.strokeStyle = "white";
+  ctx.strokeStyle="white";
   ctx.beginPath();
-  ctx.moveTo(sperm.x - 12, sperm.y);
-  ctx.lineTo(sperm.x - 30, sperm.y + Math.sin(Date.now()/100)*8);
+  ctx.moveTo(px-10,py);
+  ctx.lineTo(px-25,py+Math.sin(Date.now()/100)*6);
   ctx.stroke();
 }
 
@@ -99,80 +131,55 @@ function drawSperm() {
    QUESTIONS (10)
 ===================== */
 const questions = [
-  {q:"What is fertilization?", a:["Fusion of sperm and egg","Cell division","Pregnancy","Ovulation"], c:0},
-  {q:"Where does fertilization usually occur?", a:["Uterus","Ovary","Fallopian tube","Cervix"], c:2},
-  {q:"What cell does sperm fertilize?", a:["Zygote","Egg","Embryo","Fetus"], c:1},
-  {q:"What is meiosis?", a:["Cell growth","Cell death","Division forming sex cells","Fertilization"], c:2},
-  {q:"What carries genetic info?", a:["Proteins","DNA","Lipids","Hormones"], c:1},
-  {q:"Which is male reproductive cell?", a:["Egg","Zygote","Sperm","Embryo"], c:2},
-  {q:"What organ produces sperm?", a:["Prostate","Testes","Penis","Bladder"], c:1},
-  {q:"What hormone regulates reproduction?", a:["Insulin","Estrogen","Adrenaline","Melatonin"], c:1},
-  {q:"What forms after fertilization?", a:["Embryo","Zygote","Fetus","Egg"], c:1},
-  {q:"Why is sexual reproduction important?", a:["Speed","Variation","Cloning","Size"], c:1}
+["What is fertilization?",["Fusion of sperm and egg","Cell division","Pregnancy"],0],
+["Where does fertilization occur?",["Uterus","Fallopian tube","Ovary"],1],
+["What cell does sperm fertilize?",["Embryo","Egg","Zygote"],1],
+["What is meiosis?",["Growth","Division for sex cells","Repair"],1],
+["What carries genes?",["DNA","Protein","Hormones"],0],
+["Male sex cell?",["Egg","Sperm","Zygote"],1],
+["Where is sperm made?",["Testes","Bladder","Prostate"],0],
+["Female hormone?",["Insulin","Estrogen","Adrenaline"],1],
+["After fertilization forms?",["Embryo","Zygote","Fetus"],1],
+["Why sexual reproduction?",["Speed","Variation","Size"],1]
 ];
 
 function showQuestion() {
-  state = "question";
+  state="question";
   document.getElementById("questionScreen").classList.remove("hidden");
 
   const q = questions[questionIndex];
-  document.getElementById("questionText").textContent = q.q;
+  document.getElementById("questionText").textContent = q[0];
+  const aDiv = document.getElementById("answers");
+  aDiv.innerHTML="";
 
-  const answersDiv = document.getElementById("answers");
-  answersDiv.innerHTML = "";
-  q.a.forEach((ans,i)=>{
-    const btn=document.createElement("button");
-    btn.textContent=ans;
-    btn.onclick=()=>answer(i);
-    answersDiv.appendChild(btn);
+  q[1].forEach((ans,i)=>{
+    const b=document.createElement("button");
+    b.textContent=ans;
+    b.onclick=()=>answer(i);
+    aDiv.appendChild(b);
   });
 }
 
 function answer(i) {
-  if (i === questions[questionIndex].c) time -= 10;
-  else time += 10;
+  if (i===questions[questionIndex][2]) time-=10;
+  else time+=10;
 
   questionIndex++;
   document.getElementById("questionScreen").classList.add("hidden");
 
-  state = questionIndex === questions.length ? "flappy" : "maze";
-}
-
-/* =====================
-   FLAPPY SPERM
-===================== */
-let vy = 0;
-let pipes = [];
-
-function flappy() {
-  sperm.y += vy;
-  vy += 0.4;
-  if (keys[" "]) vy = -6;
-
-  if (Math.random()<0.02) {
-    pipes.push({x:900, gap:150+Math.random()*150});
-  }
-
-  pipes.forEach(p=>p.x-=3);
-  pipes = pipes.filter(p=>p.x>-50);
-
-  pipes.forEach(p=>{
-    if (sperm.x>p.x && sperm.x<p.x+40 &&
-       (sperm.y<p.gap-60||sperm.y>p.gap+60)) {
-      endGame();
-    }
-  });
+  if (questionIndex===questions.length) endGame();
+  else state="maze";
 }
 
 /* =====================
    END
 ===================== */
 function endGame() {
-  clearInterval(timerInterval);
-  saveScore(playerName, time);
+  clearInterval(timer);
+  saveScore();
   document.getElementById("endScreen").classList.remove("hidden");
-  document.getElementById("finalTime").textContent = `Time: ${time.toFixed(1)}s`;
-  loadLeaderboard("leaderboardEnd");
+  document.getElementById("finalTime").textContent=`Time: ${time.toFixed(1)}s`;
+  loadBoard("leaderboardEnd");
   state="end";
 }
 
@@ -184,26 +191,13 @@ function restart() {
    LOOP
 ===================== */
 function loop() {
-  ctx.clearRect(0,0,900,500);
+  ctx.clearRect(0,0,600,600);
 
   if (state==="maze") {
-    let nx=sperm.x, ny=sperm.y;
-    if(keys["w"])ny-=sperm.speed;
-    if(keys["s"])ny+=sperm.speed;
-    if(keys["a"])nx-=sperm.speed;
-    if(keys["d"])nx+=sperm.speed;
-    if(!hitWall(nx,ny)){sperm.x=nx;sperm.y=ny;}
-
-    walls.forEach(w=>ctx.fillRect(w.x,w.y,w.w,w.h));
-    ctx.fillStyle="lime";
-    ctx.fillRect(finish.x,finish.y,finish.w,finish.h);
+    updateMaze();
+    drawMaze();
     drawSperm();
-
-    if (sperm.x>finish.x) showQuestion();
   }
-
-  if (state==="flappy") flappy();
-  drawSperm();
 
   requestAnimationFrame(loop);
 }
