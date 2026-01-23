@@ -11,10 +11,6 @@ body {
   overflow: hidden;
 }
 
-canvas {
-  display: none;
-}
-
 .screen {
   display: none;
   height: 100vh;
@@ -27,6 +23,16 @@ canvas {
   display: block;
 }
 
+canvas {
+  display: none;
+}
+
+input {
+  padding: 10px;
+  font-size: 18px;
+  margin: 10px;
+}
+
 button {
   padding: 15px 30px;
   font-size: 18px;
@@ -35,14 +41,14 @@ button {
 
 #questionBox {
   display: grid;
-  grid-template-rows: repeat(4, 1fr);
+  grid-template-rows: repeat(5, 1fr);
   height: 100%;
 }
 
 .answer {
   border: 2px solid white;
   margin: 10px;
-  padding: 30px;
-  font-size: 24px;
+  padding: 25px;
+  font-size: 22px;
   cursor: pointer;
 }
