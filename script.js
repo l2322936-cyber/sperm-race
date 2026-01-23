@@ -40,84 +40,170 @@ function startGame() {
   mazeLoop();
 }
 
-// ---------- MAZE (HAND-TRACED, SOLVABLE) ----------
-const tile = 40;
-const maze = [
-"########################",
-"#S   #       #        #",
-"# ### # ##### # ###### #",
-"#     #     # #      # #",
-"##### ##### # ###### # #",
-"#     #   # #        # #",
-"# ### # # # ######## # #",
-"# #   # # #        #   #",
-"# # ##### # ######## ###",
-"# #     # #        #   #",
-"# ##### # ###### ### ###",
-"#     #       #        E",
-"########################"
+/* =====================
+   SOLVABLE MAZE SYSTEM
+===================== */
+
+const tileSize = 40;
+
+// 0 = path
+// 1 = wall
+// S = start
+// E = end
+
+const mazeMap = [
+  "111111111111111",
+  "1S0000000010001",
+  "1011111111010101",
+  "1000000010010101",
+  "1110111011110101",
+  "1000100000000101",
+  "1011101111111101",
+  "1010001000000001",
+  "1010111011111111",
+  "10000000100000E1",
+  "111111111111111"
 ];
 
-let px = tile * 1.5;
-let py = tile * 1.5;
-let vx = 0, vy = 0;
-const speed = 6;
+const mazeRows = mazeMap.length;
+const mazeCols = mazeMap[0].length;
 
-document.addEventListener("keydown", e => {
-  if (e.key === "ArrowUp") vy = -speed;
-  if (e.key === "ArrowDown") vy = speed;
-  if (e.key === "ArrowLeft") vx = -speed;
-  if (e.key === "ArrowRight") vx = speed;
-});
-document.addEventListener("keyup", () => vx = vy = 0);
+canvas.width = mazeCols * tileSize;
+canvas.height = mazeRows * tileSize;
 
-function wall(x, y) {
-  const c = Math.floor(x / tile);
-  const r = Math.floor(y / tile);
-  return maze[r]?.[c] === "#";
+// find start + end
+let startPos = { x: 1, y: 1 };
+let endPos = { x: 13, y: 9 };
+
+for (let y = 0; y < mazeRows; y++) {
+  for (let x = 0; x < mazeCols; x++) {
+    if (mazeMap[y][x] === "S") startPos = { x, y };
+    if (mazeMap[y][x] === "E") endPos = { x, y };
+  }
 }
 
+/* =====================
+   PLAYER (SPERM)
+===================== */
+
+const player = {
+  x: startPos.x * tileSize + tileSize / 2,
+  y: startPos.y * tileSize + tileSize / 2,
+  r: 12,
+  speed: 4 // fast but smooth
+};
+
+/* =====================
+   DRAW MAZE
+===================== */
+
 function drawMaze() {
-  for (let r = 0; r < maze.length; r++) {
-    for (let c = 0; c < maze[r].length; c++) {
-      if (maze[r][c] === "#") {
-        ctx.fillStyle = "#123";
-        ctx.fillRect(c * tile, r * tile, tile, tile);
+  for (let y = 0; y < mazeRows; y++) {
+    for (let x = 0; x < mazeCols; x++) {
+      if (mazeMap[y][x] === "1") {
+        ctx.fillStyle = "#0a4cff";
+        ctx.fillRect(
+          x * tileSize,
+          y * tileSize,
+          tileSize,
+          tileSize
+        );
       }
     }
   }
+
+  // end tile
+  ctx.fillStyle = "#00ff99";
+  ctx.fillRect(
+    endPos.x * tileSize,
+    endPos.y * tileSize,
+    tileSize,
+    tileSize
+  );
 }
 
-function drawSperm(x, y) {
-  ctx.fillStyle = "white";
+/* =====================
+   COLLISION CHECK
+===================== */
+
+function isWall(px, py) {
+  const col = Math.floor(px / tileSize);
+  const row = Math.floor(py / tileSize);
+
+  if (row < 0 || col < 0 || row >= mazeRows || col >= mazeCols) return true;
+  return mazeMap[row][col] === "1";
+}
+
+/* =====================
+   PLAYER MOVEMENT
+===================== */
+
+function movePlayer(dx, dy) {
+  const nextX = player.x + dx;
+  const nextY = player.y + dy;
+
+  if (!isWall(nextX, player.y)) player.x = nextX;
+  if (!isWall(player.x, nextY)) player.y = nextY;
+}
+
+/* =====================
+   DRAW SPERM (REALISTIC)
+===================== */
+
+function drawSperm() {
+  ctx.fillStyle = "#ffffff";
+
+  // head
   ctx.beginPath();
-  ctx.ellipse(x, y, 12, 6, 0, 0, Math.PI * 2);
+  ctx.ellipse(player.x, player.y, 12, 8, 0, 0, Math.PI * 2);
   ctx.fill();
-  ctx.strokeStyle = "white";
+
+  // tail
+  ctx.strokeStyle = "#ffffff";
+  ctx.lineWidth = 2;
   ctx.beginPath();
-  ctx.moveTo(x - 12, y);
-  ctx.lineTo(x - 30, y + Math.sin(Date.now()/100)*4);
+  ctx.moveTo(player.x - 12, player.y);
+  ctx.lineTo(player.x - 25, player.y + Math.sin(Date.now() / 100) * 4);
   ctx.stroke();
 }
 
-function mazeLoop() {
-  if (stage !== "maze") return;
-  ctx.clearRect(0,0,canvas.width,canvas.height);
-  drawMaze();
+/* =====================
+   WIN CHECK
+===================== */
 
-  if (!wall(px + vx, py)) px += vx;
-  if (!wall(px, py + vy)) py += vy;
+function checkMazeWin() {
+  const cx = Math.floor(player.x / tileSize);
+  const cy = Math.floor(player.y / tileSize);
 
-  drawSperm(px, py);
-
-  if (px > tile * 22 && py > tile * 10) {
-    canvas.style.display = "none";
+  if (cx === endPos.x && cy === endPos.y) {
     startQuestions();
-    return;
   }
+}
 
+/* =====================
+   GAME LOOP
+===================== */
+
+function mazeLoop() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  drawMaze();
+  drawSperm();
+  checkMazeWin();
   requestAnimationFrame(mazeLoop);
 }
+
+/* =====================
+   KEY CONTROLS
+===================== */
+
+document.addEventListener("keydown", e => {
+  if (!gameActive) return;
+
+  if (e.key === "ArrowUp") movePlayer(0, -player.speed);
+  if (e.key === "ArrowDown") movePlayer(0, player.speed);
+  if (e.key === "ArrowLeft") movePlayer(-player.speed, 0);
+  if (e.key === "ArrowRight") movePlayer(player.speed, 0);
+});
 
 // ---------- QUESTIONS ----------
 const questions = [
