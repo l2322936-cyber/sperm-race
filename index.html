@@ -7,32 +7,27 @@
 </head>
 <body>
 
-<div id="startScreen" class="screen">
+<div id="start" class="screen active">
   <h1>Sperm Race</h1>
-
-  <input id="nameInput" placeholder="Enter your name" />
-
+  <input id="nameInput" placeholder="Enter your name">
   <h2>Leaderboard</h2>
-  <ul id="leaderboard"></ul>
-
+  <ul id="board"></ul>
   <button onclick="startGame()">Start</button>
 </div>
 
-<canvas id="gameCanvas"></canvas>
+<canvas id="game"></canvas>
 
-<div id="questionScreen" class="screen">
-  <h2 id="questionText"></h2>
+<div id="questions" class="screen">
+  <h2 id="qText"></h2>
   <div id="answers"></div>
 </div>
 
-<div id="endScreen" class="screen">
-  <h1>Finished!</h1>
+<div id="end" class="screen">
+  <h1>Finished</h1>
   <p id="finalTime"></p>
-
   <h2>Leaderboard</h2>
-  <ul id="finalLeaderboard"></ul>
-
-  <button onclick="restart()">Restart</button>
+  <ul id="finalBoard"></ul>
+  <button onclick="location.reload()">Restart</button>
 </div>
 
 <script src="script.js"></script>
