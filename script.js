@@ -1,15 +1,21 @@
+/* =====================
+   CANVAS SETUP
+===================== */
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
-canvas.width = window.innerWidth;
-canvas.height = window.innerHeight;
 
-// ---------- GLOBAL ----------
-let name = "";
+/* =====================
+   GLOBAL STATE
+===================== */
+let playerName = "";
 let time = 0;
-let timer;
+let timer = null;
 let stage = "start";
+let gameActive = false;
 
-// ---------- LEADERBOARD ----------
+/* =====================
+   LEADERBOARD
+===================== */
 function getBoard() {
   return JSON.parse(localStorage.getItem("spermBoard") || "[]");
 }
@@ -29,162 +35,119 @@ function renderBoard(el) {
 }
 renderBoard(document.getElementById("board"));
 
-// ---------- START ----------
+/* =====================
+   START GAME
+===================== */
 function startGame() {
-  name = document.getElementById("nameInput").value || "Anonymous";
+  playerName = document.getElementById("nameInput").value || "Anonymous";
   document.getElementById("start").classList.remove("active");
-  canvas.style.display = "block";
+
   stage = "maze";
+  gameActive = true;
   time = 0;
+
   timer = setInterval(() => time++, 1000);
+
+  initMaze();
   mazeLoop();
 }
 
 /* =====================
-   SOLVABLE MAZE SYSTEM
+   MAZE DATA (SOLVABLE)
 ===================== */
-
 const tileSize = 40;
 
-// 0 = path
-// 1 = wall
-// S = start
-// E = end
-
 const mazeMap = [
-  "111111111111111",
-  "1S0000000010001",
+  "1111111111111111",
+  "1S00000000100001",
   "1011111111010101",
   "1000000010010101",
   "1110111011110101",
   "1000100000000101",
   "1011101111111101",
   "1010001000000001",
-  "1010111011111111",
+  "1010111011111101",
   "10000000100000E1",
-  "111111111111111"
+  "1111111111111111"
 ];
 
-const mazeRows = mazeMap.length;
-const mazeCols = mazeMap[0].length;
+const rows = mazeMap.length;
+const cols = mazeMap[0].length;
 
-canvas.width = mazeCols * tileSize;
-canvas.height = mazeRows * tileSize;
-
-// find start + end
 let startPos = { x: 1, y: 1 };
-let endPos = { x: 13, y: 9 };
+let endPos = { x: 14, y: 9 };
 
-for (let y = 0; y < mazeRows; y++) {
-  for (let x = 0; x < mazeCols; x++) {
-    if (mazeMap[y][x] === "S") startPos = { x, y };
-    if (mazeMap[y][x] === "E") endPos = { x, y };
+function initMaze() {
+  canvas.width = cols * tileSize;
+  canvas.height = rows * tileSize;
+
+  for (let y = 0; y < rows; y++) {
+    for (let x = 0; x < cols; x++) {
+      if (mazeMap[y][x] === "S") startPos = { x, y };
+      if (mazeMap[y][x] === "E") endPos = { x, y };
+    }
   }
+
+  player.x = startPos.x * tileSize + tileSize / 2;
+  player.y = startPos.y * tileSize + tileSize / 2;
 }
 
 /* =====================
    PLAYER (SPERM)
 ===================== */
-
 const player = {
-  x: startPos.x * tileSize + tileSize / 2,
-  y: startPos.y * tileSize + tileSize / 2,
-  r: 12,
-  speed: 4 // fast but smooth
+  x: 0,
+  y: 0,
+  speed: 6 // fast, pixel-by-pixel
 };
 
-/* =====================
-   DRAW MAZE
-===================== */
-
-function drawMaze() {
-  for (let y = 0; y < mazeRows; y++) {
-    for (let x = 0; x < mazeCols; x++) {
-      if (mazeMap[y][x] === "1") {
-        ctx.fillStyle = "#0a4cff";
-        ctx.fillRect(
-          x * tileSize,
-          y * tileSize,
-          tileSize,
-          tileSize
-        );
-      }
-    }
-  }
-
-  // end tile
-  ctx.fillStyle = "#00ff99";
-  ctx.fillRect(
-    endPos.x * tileSize,
-    endPos.y * tileSize,
-    tileSize,
-    tileSize
-  );
-}
-
-/* =====================
-   COLLISION CHECK
-===================== */
-
-function isWall(px, py) {
-  const col = Math.floor(px / tileSize);
-  const row = Math.floor(py / tileSize);
-
-  if (row < 0 || col < 0 || row >= mazeRows || col >= mazeCols) return true;
-  return mazeMap[row][col] === "1";
-}
-
-/* =====================
-   PLAYER MOVEMENT
-===================== */
-
-function movePlayer(dx, dy) {
-  const nextX = player.x + dx;
-  const nextY = player.y + dy;
-
-  if (!isWall(nextX, player.y)) player.x = nextX;
-  if (!isWall(player.x, nextY)) player.y = nextY;
-}
-
-/* =====================
-   DRAW SPERM (REALISTIC)
-===================== */
-
-function drawSperm() {
-  ctx.fillStyle = "#ffffff";
-
-  // head
+function drawSperm(x = player.x, y = player.y) {
+  ctx.fillStyle = "#fff";
   ctx.beginPath();
-  ctx.ellipse(player.x, player.y, 12, 8, 0, 0, Math.PI * 2);
+  ctx.ellipse(x, y, 14, 9, 0, 0, Math.PI * 2);
   ctx.fill();
 
-  // tail
-  ctx.strokeStyle = "#ffffff";
+  ctx.strokeStyle = "#fff";
   ctx.lineWidth = 2;
   ctx.beginPath();
-  ctx.moveTo(player.x - 12, player.y);
-  ctx.lineTo(player.x - 25, player.y + Math.sin(Date.now() / 100) * 4);
+  ctx.moveTo(x - 14, y);
+  ctx.lineTo(x - 30, y + Math.sin(Date.now() / 100) * 6);
   ctx.stroke();
 }
 
 /* =====================
-   WIN CHECK
+   MAZE RENDER + COLLISION
 ===================== */
-
-function checkMazeWin() {
-  const cx = Math.floor(player.x / tileSize);
-  const cy = Math.floor(player.y / tileSize);
-
-  if (cx === endPos.x && cy === endPos.y) {
-    startQuestions();
+function drawMaze() {
+  for (let y = 0; y < rows; y++) {
+    for (let x = 0; x < cols; x++) {
+      if (mazeMap[y][x] === "1") {
+        ctx.fillStyle = "#0a4cff";
+        ctx.fillRect(x * tileSize, y * tileSize, tileSize, tileSize);
+      }
+    }
   }
+  ctx.fillStyle = "#00ff99";
+  ctx.fillRect(endPos.x * tileSize, endPos.y * tileSize, tileSize, tileSize);
+}
+
+function isWall(px, py) {
+  const c = Math.floor(px / tileSize);
+  const r = Math.floor(py / tileSize);
+  if (r < 0 || c < 0 || r >= rows || c >= cols) return true;
+  return mazeMap[r][c] === "1";
+}
+
+function movePlayer(dx, dy) {
+  if (!isWall(player.x + dx, player.y)) player.x += dx;
+  if (!isWall(player.x, player.y + dy)) player.y += dy;
 }
 
 /* =====================
-   GAME LOOP
+   MAZE LOOP
 ===================== */
-
 function mazeLoop() {
+  if (stage !== "maze") return;
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   drawMaze();
   drawSperm();
@@ -192,100 +155,131 @@ function mazeLoop() {
   requestAnimationFrame(mazeLoop);
 }
 
+function checkMazeWin() {
+  const cx = Math.floor(player.x / tileSize);
+  const cy = Math.floor(player.y / tileSize);
+  if (cx === endPos.x && cy === endPos.y) {
+    gameActive = false;
+    startQuestions();
+  }
+}
+
 /* =====================
-   KEY CONTROLS
+   CONTROLS
 ===================== */
-
 document.addEventListener("keydown", e => {
-  if (!gameActive) return;
-
+  if (!gameActive || stage !== "maze") return;
   if (e.key === "ArrowUp") movePlayer(0, -player.speed);
   if (e.key === "ArrowDown") movePlayer(0, player.speed);
   if (e.key === "ArrowLeft") movePlayer(-player.speed, 0);
   if (e.key === "ArrowRight") movePlayer(player.speed, 0);
 });
 
-// ---------- QUESTIONS ----------
+/* =====================
+   QUESTIONS (10 SLIDES)
+===================== */
 const questions = [
-["What is fertilization?", ["Fusion of gametes","Cell division","Implantation"],0],
-["Where is sperm produced?",["Testes","Ovaries","Uterus"],0],
-["Egg cells are called?",["Ova","Zygotes","Embryos"],0],
-["How many chromosomes in humans?",["46","23","92"],0],
-["Where does fertilization occur?",["Fallopian tube","Uterus","Vagina"],0],
-["What protects the fetus?",["Amniotic sac","Ovary","Cervix"],0],
-["Meiosis creates?",["Gametes","Skin cells","Organs"],0],
-["Male gamete?",["Sperm","Egg","Zygote"],0],
-["Female gamete?",["Egg","Sperm","Embryo"],0],
-["Zygote means?",["Fertilized egg","Embryo","Gamete"],0]
+  ["What is fertilization?", ["Fusion of gametes", "Cell division", "Implantation"], 0],
+  ["Where is sperm produced?", ["Testes", "Ovaries", "Uterus"], 0],
+  ["Female gamete is called?", ["Egg", "Sperm", "Zygote"], 0],
+  ["Human chromosome count?", ["46", "23", "92"], 0],
+  ["Where does fertilization occur?", ["Fallopian tube", "Uterus", "Vagina"], 0],
+  ["What is a zygote?", ["Fertilized egg", "Embryo", "Gamete"], 0],
+  ["What process makes gametes?", ["Meiosis", "Mitosis", "Diffusion"], 0],
+  ["Which protects the fetus?", ["Amniotic sac", "Placenta", "Ovary"], 0],
+  ["Male reproductive cell?", ["Sperm", "Egg", "Embryo"], 0],
+  ["DNA stands for?", ["Deoxyribonucleic acid", "Dual nucleus acid", "Dynamic RNA"], 0]
 ];
 
-let qi = 0;
+let qIndex = 0;
 
 function startQuestions() {
   stage = "questions";
   document.getElementById("questions").classList.add("active");
-  showQ();
+  showQuestion();
 }
 
-function showQ() {
-  const q = questions[qi];
+function showQuestion() {
+  const q = questions[qIndex];
   document.getElementById("qText").textContent = q[0];
   const a = document.getElementById("answers");
   a.innerHTML = "";
-  q[1].forEach((t,i)=>{
-    const b=document.createElement("button");
-    b.textContent=t;
-    b.onclick=()=>{
-      time += i===q[2] ? -10 : 10;
-      qi++;
-      qi<questions.length ? showQ() : startFlappy();
+
+  q[1].forEach((txt, i) => {
+    const btn = document.createElement("button");
+    btn.textContent = txt;
+    btn.onclick = () => {
+      time += i === q[2] ? -10 : 10;
+      qIndex++;
+      qIndex < questions.length ? showQuestion() : startFlappy();
     };
-    a.appendChild(b);
+    a.appendChild(btn);
   });
 }
 
-// ---------- FLAPPY ----------
-let fy = canvas.height/2, fvy = 0;
-let pipes = [];
+/* =====================
+   FLAPPY SPERM
+===================== */
+let fy, fvy, pipes, distance;
 
-document.addEventListener("keydown",e=>{
-  if(stage==="flappy" && e.key==="ArrowUp") fvy=-8;
-});
-
-function startFlappy(){
+function startFlappy() {
   document.getElementById("questions").classList.remove("active");
-  canvas.style.display="block";
-  stage="flappy";
-  pipes=[];
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+
+  stage = "flappy";
+  fy = canvas.height / 2;
+  fvy = 0;
+  pipes = [];
+  distance = 0;
+
   flappyLoop();
 }
 
-function flappyLoop(){
-  if(stage!=="flappy")return;
-  ctx.clearRect(0,0,canvas.width,canvas.height);
+document.addEventListener("keydown", e => {
+  if (stage === "flappy" && e.key === "ArrowUp") fvy = -8;
+});
 
-  fvy+=0.4; fy+=fvy;
-  drawSperm(150,fy);
+function flappyLoop() {
+  if (stage !== "flappy") return;
 
-  if(Math.random()<0.02)
-    pipes.push({x:canvas.width,g:200+Math.random()*200});
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-  pipes.forEach(p=>{
-    p.x-=4;
-    ctx.fillRect(p.x,0,40,p.g-120);
-    ctx.fillRect(p.x,p.g+120,40,canvas.height);
+  distance++;
+  time -= Math.floor(distance / 600); // farther = more time shaved
+
+  fvy += 0.5;
+  fy += fvy;
+
+  drawSperm(200, fy);
+
+  if (Math.random() < 0.02 + distance / 20000) {
+    pipes.push({ x: canvas.width, gap: 180 - distance / 200 });
+  }
+
+  pipes.forEach(p => {
+    p.x -= 4 + distance / 1500;
+    ctx.fillStyle = "#0a4cff";
+    ctx.fillRect(p.x, 0, 50, canvas.height / 2 - p.gap);
+    ctx.fillRect(p.x, canvas.height / 2 + p.gap, 50, canvas.height);
+    if (p.x < 200 && p.x + 50 > 200 && (fy < canvas.height / 2 - p.gap || fy > canvas.height / 2 + p.gap)) {
+      endGame();
+    }
   });
 
-  if(fy<0||fy>canvas.height) return endGame();
+  if (fy < 0 || fy > canvas.height) endGame();
   requestAnimationFrame(flappyLoop);
 }
 
-// ---------- END ----------
-function endGame(){
+/* =====================
+   END GAME
+===================== */
+function endGame() {
   clearInterval(timer);
-  saveScore(name,time);
-  canvas.style.display="none";
+  saveScore(playerName, time);
+  stage = "end";
+  canvas.style.display = "none";
   document.getElementById("end").classList.add("active");
-  document.getElementById("finalTime").textContent=`Time: ${time}s`;
+  document.getElementById("finalTime").textContent = `Time: ${time}s`;
   renderBoard(document.getElementById("finalBoard"));
 }
