@@ -5,7 +5,7 @@
 
 body {
   margin: 0;
-  background: #0b1a2a;
+  background: #0b2a4a;
   color: white;
   overflow: hidden;
 }
@@ -23,21 +23,21 @@ body {
   display: flex;
 }
 
+canvas {
+  display: none;
+  background: #0b2a4a;
+}
+
 button {
-  padding: 15px 40px;
+  padding: 16px 40px;
   font-size: 20px;
+  margin-top: 20px;
   cursor: pointer;
 }
 
 input {
-  padding: 10px;
+  padding: 12px;
   font-size: 18px;
-  margin-bottom: 20px;
-}
-
-#gameCanvas {
-  display: none;
-  background: #001f3f;
 }
 
 #answers {
@@ -47,7 +47,7 @@ input {
 
 #answers button {
   width: 100%;
+  padding: 30px;
   margin: 15px 0;
-  padding: 25px;
   font-size: 22px;
 }
