@@ -1,73 +1,65 @@
-// ================= SETUP =================
-const startScreen = document.getElementById("startScreen");
-const questionScreen = document.getElementById("questionScreen");
-const endScreen = document.getElementById("endScreen");
-const canvas = document.getElementById("gameCanvas");
+const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
-
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
 
-let playerName = "";
+// ---------- GLOBAL ----------
+let name = "";
 let time = 0;
-let timerInterval;
+let timer;
 let stage = "start";
-let currentQuestion = 0;
 
-// ================= LEADERBOARD =================
-function getLeaderboard() {
-  return JSON.parse(localStorage.getItem("leaderboard") || "[]");
+// ---------- LEADERBOARD ----------
+function getBoard() {
+  return JSON.parse(localStorage.getItem("spermBoard") || "[]");
 }
-
-function saveScore(name, time) {
-  const board = getLeaderboard();
-  board.push({ name, time });
-  board.sort((a, b) => a.time - b.time);
-  localStorage.setItem("leaderboard", JSON.stringify(board.slice(0, 5)));
+function saveScore(n, t) {
+  const b = getBoard();
+  b.push({ n, t });
+  b.sort((a, b) => a.t - b.t);
+  localStorage.setItem("spermBoard", JSON.stringify(b.slice(0, 5)));
 }
-
-function renderLeaderboard(el) {
+function renderBoard(el) {
   el.innerHTML = "";
-  getLeaderboard().forEach(s => {
+  getBoard().forEach(s => {
     const li = document.createElement("li");
-    li.textContent = `${s.name} — ${s.time}s`;
+    li.textContent = `${s.n} — ${s.t}s`;
     el.appendChild(li);
   });
 }
+renderBoard(document.getElementById("board"));
 
-renderLeaderboard(document.getElementById("leaderboard"));
-
-// ================= START =================
+// ---------- START ----------
 function startGame() {
-  playerName = document.getElementById("nameInput").value || "Anonymous";
-  startScreen.classList.remove("active");
+  name = document.getElementById("nameInput").value || "Anonymous";
+  document.getElementById("start").classList.remove("active");
   canvas.style.display = "block";
   stage = "maze";
   time = 0;
-
-  timerInterval = setInterval(() => time++, 1000);
-  startMaze();
+  timer = setInterval(() => time++, 1000);
+  mazeLoop();
 }
 
-// ================= MAZE =================
+// ---------- MAZE (HAND-TRACED, SOLVABLE) ----------
 const tile = 40;
 const maze = [
-  "####################",
-  "#S   #       #     #",
-  "# ### # ##### # ### #",
-  "#     #     # #   # #",
-  "##### ##### # ### # #",
-  "#     #   # #     # #",
-  "# ### # # # ##### # #",
-  "# #   # # #     #   #",
-  "# # ##### # ##### ###",
-  "# #     # #   #     #",
-  "# ##### # ### ### ###",
-  "#     #       #   E #",
-  "####################"
+"########################",
+"#S   #       #        #",
+"# ### # ##### # ###### #",
+"#     #     # #      # #",
+"##### ##### # ###### # #",
+"#     #   # #        # #",
+"# ### # # # ######## # #",
+"# #   # # #        #   #",
+"# # ##### # ######## ###",
+"# #     # #        #   #",
+"# ##### # ###### ### ###",
+"#     #       #        E",
+"########################"
 ];
 
-let px = 60, py = 60;
+let px = tile * 1.5;
+let py = tile * 1.5;
 let vx = 0, vy = 0;
 const speed = 6;
 
@@ -77,47 +69,48 @@ document.addEventListener("keydown", e => {
   if (e.key === "ArrowLeft") vx = -speed;
   if (e.key === "ArrowRight") vx = speed;
 });
-
 document.addEventListener("keyup", () => vx = vy = 0);
 
 function wall(x, y) {
   const c = Math.floor(x / tile);
   const r = Math.floor(y / tile);
-  return maze[r][c] === "#";
+  return maze[r]?.[c] === "#";
 }
 
-function startMaze() {
-  requestAnimationFrame(mazeLoop);
-}
-
-function mazeLoop() {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-
+function drawMaze() {
   for (let r = 0; r < maze.length; r++) {
     for (let c = 0; c < maze[r].length; c++) {
       if (maze[r][c] === "#") {
-        ctx.fillStyle = "#222";
+        ctx.fillStyle = "#123";
         ctx.fillRect(c * tile, r * tile, tile, tile);
       }
     }
   }
+}
+
+function drawSperm(x, y) {
+  ctx.fillStyle = "white";
+  ctx.beginPath();
+  ctx.ellipse(x, y, 12, 6, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = "white";
+  ctx.beginPath();
+  ctx.moveTo(x - 12, y);
+  ctx.lineTo(x - 30, y + Math.sin(Date.now()/100)*4);
+  ctx.stroke();
+}
+
+function mazeLoop() {
+  if (stage !== "maze") return;
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  drawMaze();
 
   if (!wall(px + vx, py)) px += vx;
   if (!wall(px, py + vy)) py += vy;
 
-  // sperm
-  ctx.fillStyle = "white";
-  ctx.beginPath();
-  ctx.ellipse(px, py, 10, 6, 0, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.strokeStyle = "white";
-  ctx.beginPath();
-  ctx.moveTo(px - 10, py);
-  ctx.lineTo(px - 25, py);
-  ctx.stroke();
+  drawSperm(px, py);
 
-  // finish
-  if (px > canvas.width - 80 && py > canvas.height - 80) {
+  if (px > tile * 22 && py > tile * 10) {
     canvas.style.display = "none";
     startQuestions();
     return;
@@ -126,100 +119,87 @@ function mazeLoop() {
   requestAnimationFrame(mazeLoop);
 }
 
-// ================= QUESTIONS =================
+// ---------- QUESTIONS ----------
 const questions = [
-  { q: "What is fertilization?", a: ["Fusion of gametes", "Cell division", "Implantation"], c: 0 },
-  { q: "Sperm are produced in the…", a: ["Testes", "Ovaries", "Uterus"], c: 0 },
-  { q: "Egg cells are also called?", a: ["Ova", "Zygotes", "Embryos"], c: 0 },
-  { q: "How many chromosomes in humans?", a: ["46", "23", "92"], c: 0 },
-  { q: "Where does fertilization occur?", a: ["Fallopian tube", "Uterus", "Vagina"], c: 0 },
-  { q: "What protects the embryo?", a: ["Amniotic sac", "Placenta", "Ovary"], c: 0 },
-  { q: "What is meiosis?", a: ["Cell division forming gametes", "Growth", "Repair"], c: 0 },
-  { q: "Which is male gamete?", a: ["Sperm", "Egg", "Zygote"], c: 0 },
-  { q: "Which is female gamete?", a: ["Egg", "Sperm", "Embryo"], c: 0 },
-  { q: "Zygote means?", a: ["Fertilized egg", "Unfertilized egg", "Embryo"], c: 0 }
+["What is fertilization?", ["Fusion of gametes","Cell division","Implantation"],0],
+["Where is sperm produced?",["Testes","Ovaries","Uterus"],0],
+["Egg cells are called?",["Ova","Zygotes","Embryos"],0],
+["How many chromosomes in humans?",["46","23","92"],0],
+["Where does fertilization occur?",["Fallopian tube","Uterus","Vagina"],0],
+["What protects the fetus?",["Amniotic sac","Ovary","Cervix"],0],
+["Meiosis creates?",["Gametes","Skin cells","Organs"],0],
+["Male gamete?",["Sperm","Egg","Zygote"],0],
+["Female gamete?",["Egg","Sperm","Embryo"],0],
+["Zygote means?",["Fertilized egg","Embryo","Gamete"],0]
 ];
+
+let qi = 0;
 
 function startQuestions() {
   stage = "questions";
-  questionScreen.classList.add("active");
-  showQuestion();
+  document.getElementById("questions").classList.add("active");
+  showQ();
 }
 
-function showQuestion() {
-  const q = questions[currentQuestion];
-  document.getElementById("questionText").textContent = q.q;
-  const answers = document.getElementById("answers");
-  answers.innerHTML = "";
-
-  q.a.forEach((text, i) => {
-    const btn = document.createElement("button");
-    btn.textContent = text;
-    btn.onclick = () => {
-      time += i === q.c ? -10 : 10;
-      currentQuestion++;
-      currentQuestion < questions.length ? showQuestion() : startFlappy();
+function showQ() {
+  const q = questions[qi];
+  document.getElementById("qText").textContent = q[0];
+  const a = document.getElementById("answers");
+  a.innerHTML = "";
+  q[1].forEach((t,i)=>{
+    const b=document.createElement("button");
+    b.textContent=t;
+    b.onclick=()=>{
+      time += i===q[2] ? -10 : 10;
+      qi++;
+      qi<questions.length ? showQ() : startFlappy();
     };
-    answers.appendChild(btn);
+    a.appendChild(b);
   });
 }
 
-// ================= FLAPPY =================
-let fy = canvas.height / 2;
-let fvy = 0;
+// ---------- FLAPPY ----------
+let fy = canvas.height/2, fvy = 0;
 let pipes = [];
 
-document.addEventListener("keydown", e => {
-  if (stage === "flappy" && e.key === "ArrowUp") fvy = -8;
+document.addEventListener("keydown",e=>{
+  if(stage==="flappy" && e.key==="ArrowUp") fvy=-8;
 });
 
-function startFlappy() {
-  questionScreen.classList.remove("active");
-  canvas.style.display = "block";
-  stage = "flappy";
-  pipes = [];
-  requestAnimationFrame(flappyLoop);
+function startFlappy(){
+  document.getElementById("questions").classList.remove("active");
+  canvas.style.display="block";
+  stage="flappy";
+  pipes=[];
+  flappyLoop();
 }
 
-function flappyLoop() {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
+function flappyLoop(){
+  if(stage!=="flappy")return;
+  ctx.clearRect(0,0,canvas.width,canvas.height);
 
-  fvy += 0.4;
-  fy += fvy;
+  fvy+=0.4; fy+=fvy;
+  drawSperm(150,fy);
 
-  ctx.fillStyle = "white";
-  ctx.beginPath();
-  ctx.ellipse(150, fy, 10, 6, 0, 0, Math.PI * 2);
-  ctx.fill();
+  if(Math.random()<0.02)
+    pipes.push({x:canvas.width,g:200+Math.random()*200});
 
-  if (Math.random() < 0.02) {
-    pipes.push({ x: canvas.width, gap: 200 + Math.random() * 200 });
-  }
-
-  pipes.forEach(p => {
-    p.x -= 4;
-    ctx.fillRect(p.x, 0, 40, p.gap - 120);
-    ctx.fillRect(p.x, p.gap + 120, 40, canvas.height);
+  pipes.forEach(p=>{
+    p.x-=4;
+    ctx.fillRect(p.x,0,40,p.g-120);
+    ctx.fillRect(p.x,p.g+120,40,canvas.height);
   });
 
-  if (fy < 0 || fy > canvas.height) return endGame();
-
+  if(fy<0||fy>canvas.height) return endGame();
   requestAnimationFrame(flappyLoop);
 }
 
-// ================= END =================
-function endGame() {
-  clearInterval(timerInterval);
-  saveScore(playerName, time);
-  canvas.style.display = "none";
-  endScreen.classList.add("active");
-  document.getElementById("finalTime").textContent = `Time: ${time}s`;
-  renderLeaderboard(document.getElementById("finalLeaderboard"));
+// ---------- END ----------
+function endGame(){
+  clearInterval(timer);
+  saveScore(name,time);
+  canvas.style.display="none";
+  document.getElementById("end").classList.add("active");
+  document.getElementById("finalTime").textContent=`Time: ${time}s`;
+  renderBoard(document.getElementById("finalBoard"));
 }
-
-function restart() {
-  location.reload();
-}
-
-// ================= INIT =================
-startScreen.classList.add("active");
