@@ -1,5 +1,5 @@
 /* =====================
-   CANVAS SETUP
+   CANVAS
 ===================== */
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
@@ -46,9 +46,11 @@ function startGame() {
   gameActive = true;
   time = 0;
 
+  clearInterval(timer);
   timer = setInterval(() => time++, 1000);
 
   initMaze();
+  canvas.style.display = "block";
   mazeLoop();
 }
 
@@ -77,6 +79,15 @@ const cols = mazeMap[0].length;
 let startPos = { x: 1, y: 1 };
 let endPos = { x: 14, y: 9 };
 
+/* =====================
+   PLAYER
+===================== */
+const player = {
+  x: 0,
+  y: 0,
+  speed: 6
+};
+
 function initMaze() {
   canvas.width = cols * tileSize;
   canvas.height = rows * tileSize;
@@ -93,13 +104,24 @@ function initMaze() {
 }
 
 /* =====================
-   PLAYER (SPERM)
+   DRAW
 ===================== */
-const player = {
-  x: 0,
-  y: 0,
-  speed: 6 // fast, pixel-by-pixel
-};
+function drawMaze() {
+  ctx.fillStyle = "#001f7a";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  for (let y = 0; y < rows; y++) {
+    for (let x = 0; x < cols; x++) {
+      if (mazeMap[y][x] === "1") {
+        ctx.fillStyle = "#0a4cff";
+        ctx.fillRect(x * tileSize, y * tileSize, tileSize, tileSize);
+      }
+    }
+  }
+
+  ctx.fillStyle = "#00ff99";
+  ctx.fillRect(endPos.x * tileSize, endPos.y * tileSize, tileSize, tileSize);
+}
 
 function drawSperm(x = player.x, y = player.y) {
   ctx.fillStyle = "#fff";
@@ -111,26 +133,13 @@ function drawSperm(x = player.x, y = player.y) {
   ctx.lineWidth = 2;
   ctx.beginPath();
   ctx.moveTo(x - 14, y);
-  ctx.lineTo(x - 30, y + Math.sin(Date.now() / 100) * 6);
+  ctx.lineTo(x - 30, y + Math.sin(Date.now() / 120) * 6);
   ctx.stroke();
 }
 
 /* =====================
-   MAZE RENDER + COLLISION
+   COLLISION
 ===================== */
-function drawMaze() {
-  for (let y = 0; y < rows; y++) {
-    for (let x = 0; x < cols; x++) {
-      if (mazeMap[y][x] === "1") {
-        ctx.fillStyle = "#0a4cff";
-        ctx.fillRect(x * tileSize, y * tileSize, tileSize, tileSize);
-      }
-    }
-  }
-  ctx.fillStyle = "#00ff99";
-  ctx.fillRect(endPos.x * tileSize, endPos.y * tileSize, tileSize, tileSize);
-}
-
 function isWall(px, py) {
   const c = Math.floor(px / tileSize);
   const r = Math.floor(py / tileSize);
@@ -148,7 +157,6 @@ function movePlayer(dx, dy) {
 ===================== */
 function mazeLoop() {
   if (stage !== "maze") return;
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
   drawMaze();
   drawSperm();
   checkMazeWin();
@@ -176,25 +184,26 @@ document.addEventListener("keydown", e => {
 });
 
 /* =====================
-   QUESTIONS (10 SLIDES)
+   QUESTIONS
 ===================== */
 const questions = [
-  ["What is fertilization?", ["Fusion of gametes", "Cell division", "Implantation"], 0],
-  ["Where is sperm produced?", ["Testes", "Ovaries", "Uterus"], 0],
-  ["Female gamete is called?", ["Egg", "Sperm", "Zygote"], 0],
-  ["Human chromosome count?", ["46", "23", "92"], 0],
-  ["Where does fertilization occur?", ["Fallopian tube", "Uterus", "Vagina"], 0],
-  ["What is a zygote?", ["Fertilized egg", "Embryo", "Gamete"], 0],
-  ["What process makes gametes?", ["Meiosis", "Mitosis", "Diffusion"], 0],
-  ["Which protects the fetus?", ["Amniotic sac", "Placenta", "Ovary"], 0],
-  ["Male reproductive cell?", ["Sperm", "Egg", "Embryo"], 0],
-  ["DNA stands for?", ["Deoxyribonucleic acid", "Dual nucleus acid", "Dynamic RNA"], 0]
+  ["What is fertilization?", ["Fusion of gametes","Cell division","Implantation"],0],
+  ["Where is sperm produced?",["Testes","Ovaries","Uterus"],0],
+  ["Female gamete?",["Egg","Sperm","Zygote"],0],
+  ["Human chromosomes?",["46","23","92"],0],
+  ["Where fertilization occurs?",["Fallopian tube","Uterus","Vagina"],0],
+  ["Zygote is?",["Fertilized egg","Embryo","Gamete"],0],
+  ["Gametes made by?",["Meiosis","Mitosis","Diffusion"],0],
+  ["Protects fetus?",["Amniotic sac","Placenta","Ovary"],0],
+  ["Male gamete?",["Sperm","Egg","Embryo"],0],
+  ["DNA stands for?",["Deoxyribonucleic acid","Dual nucleus acid","Dynamic RNA"],0]
 ];
 
 let qIndex = 0;
 
 function startQuestions() {
   stage = "questions";
+  qIndex = 0;
   document.getElementById("questions").classList.add("active");
   showQuestion();
 }
@@ -218,16 +227,18 @@ function showQuestion() {
 }
 
 /* =====================
-   FLAPPY SPERM
+   FLAPPY
 ===================== */
 let fy, fvy, pipes, distance;
+const FLAPPY_X = 200;
 
 function startFlappy() {
   document.getElementById("questions").classList.remove("active");
+  stage = "flappy";
+
   canvas.width = window.innerWidth;
   canvas.height = window.innerHeight;
 
-  stage = "flappy";
   fy = canvas.height / 2;
   fvy = 0;
   pipes = [];
@@ -243,28 +254,32 @@ document.addEventListener("keydown", e => {
 function flappyLoop() {
   if (stage !== "flappy") return;
 
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.fillStyle = "#001f7a";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
 
   distance++;
-  time -= Math.floor(distance / 600); // farther = more time shaved
+  if (distance % 60 === 0) time -= Math.floor(distance / 600);
 
   fvy += 0.5;
   fy += fvy;
 
-  drawSperm(200, fy);
+  drawSperm(FLAPPY_X, fy);
 
-  if (Math.random() < 0.02 + distance / 20000) {
-    pipes.push({ x: canvas.width, gap: 180 - distance / 200 });
+  if (Math.random() < 0.02 + distance / 25000) {
+    pipes.push({ x: canvas.width, gap: 160 - distance / 300 });
   }
 
   pipes.forEach(p => {
-    p.x -= 4 + distance / 1500;
+    p.x -= 4 + distance / 2000;
     ctx.fillStyle = "#0a4cff";
     ctx.fillRect(p.x, 0, 50, canvas.height / 2 - p.gap);
     ctx.fillRect(p.x, canvas.height / 2 + p.gap, 50, canvas.height);
-    if (p.x < 200 && p.x + 50 > 200 && (fy < canvas.height / 2 - p.gap || fy > canvas.height / 2 + p.gap)) {
-      endGame();
-    }
+
+    if (
+      p.x < FLAPPY_X + 14 &&
+      p.x + 50 > FLAPPY_X - 14 &&
+      (fy < canvas.height / 2 - p.gap || fy > canvas.height / 2 + p.gap)
+    ) endGame();
   });
 
   if (fy < 0 || fy > canvas.height) endGame();
@@ -272,7 +287,7 @@ function flappyLoop() {
 }
 
 /* =====================
-   END GAME
+   END
 ===================== */
 function endGame() {
   clearInterval(timer);
