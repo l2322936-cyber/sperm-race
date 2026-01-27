@@ -11,6 +11,27 @@ let stage = "start";
 let time = 0;
 let timer;
 
+function getBoard() {
+  return JSON.parse(localStorage.getItem("spermBoard") || "[]");
+}
+
+function renderStartBoard() {
+  const list = document.getElementById("startBoard");
+  if (!list) return;
+
+  list.innerHTML = "";
+  getBoard().forEach(score => {
+    const li = document.createElement("li");
+    li.textContent = `${score.name} — ${score.time}s`;
+    list.appendChild(li);
+  });
+}
+window.onload = function () {
+  renderStartBoard();
+};
+
+
+
 /* =========================
    START BUTTON
 ========================= */
@@ -86,7 +107,7 @@ for (let y = 0; y < rows; y++) {
 const sperm = {
   x: 0,
   y: 0,
-  speed: 6, // fast + smooth
+  speed: 12, // fast + smooth
   radius: tileSize * 0.3
 };
 
@@ -273,7 +294,7 @@ function flappyLoop() {
   fvy += 0.4;
   fy += fvy;
 
-  drawFlappySperm();
+ drawFlappySperm();
 
   if (Math.random() < 0.02) {
     pipes.push({ x: canvas.width, gap: 200 + Math.random() * 200 });
@@ -297,11 +318,22 @@ function flappyLoop() {
   requestAnimationFrame(flappyLoop);
 }
 
-function drawFlappySperm() {
-  ctx.fillStyle="#fff";
+function drawFlappySperm(x, y) {
+  // head
+  ctx.fillStyle = "#ffffff";
   ctx.beginPath();
-  ctx.ellipse(120,fy,14,9,0,0,Math.PI*2);
+  ctx.ellipse(x, y, 14, 10, 0, 0, Math.PI * 2);
   ctx.fill();
+
+  // animated tail
+  ctx.strokeStyle = "#ffffff";
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(x - 14, y);
+
+  const wiggle = Math.sin(Date.now() / 100) * 6;
+  ctx.lineTo(x - 35, y + wiggle);
+  ctx.stroke();
 }
 
 /* =====================
