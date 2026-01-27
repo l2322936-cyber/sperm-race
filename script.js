@@ -18,15 +18,6 @@ function saveScore(n, t) {
   b.sort((a,b)=>a.t-b.t);
   localStorage.setItem("spermBoard", JSON.stringify(b.slice(0,5)));
 }
-function renderBoard(id) {
-  const el = document.getElementById(id);
-  el.innerHTML = "";
-  getBoard().forEach(s=>{
-    const li=document.createElement("li");
-    li.textContent=`${s.n} — ${s.t}s`;
-    el.appendChild(li);
-  });
-}
 
 /* =====================
    START
@@ -45,13 +36,8 @@ function startTimer() {
 }
 
 /* =====================
-   MAZE SETUP (SOLVABLE)
+   MAZE DATA (UNCHANGED)
 ===================== */
-const canvas = document.getElementById("mazeCanvas");
-const ctx = canvas.getContext("2d");
-canvas.width = innerWidth;
-canvas.height = innerHeight;
-
 const maze = [
 "#############################",
 "#S        #       #         #",
@@ -78,34 +64,51 @@ const maze = [
 
 const rows = maze.length;
 const cols = maze[0].length;
-const tile = Math.min(canvas.width / cols, canvas.height / rows);
 
 /* =====================
-   PLAYER (REALISTIC SPERM)
+   CANVAS + CENTERING
+===================== */
+const canvas = document.getElementById("mazeCanvas");
+const ctx = canvas.getContext("2d");
+canvas.width = innerWidth;
+canvas.height = innerHeight;
+
+const tile = Math.min(
+  canvas.width / (cols + 2),
+  canvas.height / (rows + 2)
+);
+
+const offsetX = (canvas.width - cols * tile) / 2;
+const offsetY = (canvas.height - rows * tile) / 2;
+
+/* =====================
+   PLAYER (PIXEL-BASED)
 ===================== */
 const sperm = {
-  x: 1.5,
-  y: 1.5,
-  r: tile * 0.25,
-  speed: 0.25 // 25% faster
+  x: offsetX + tile * 1.5,
+  y: offsetY + tile * 1.5,
+  r: tile * 0.22,
+  speed: tile * 0.08 // fast but precise
 };
 
 /* =====================
    COLLISION (FIXED)
 ===================== */
-function hitsWall(nx, ny) {
-  const checks = [
-    [nx + sperm.r, ny],
-    [nx - sperm.r, ny],
-    [nx, ny + sperm.r],
-    [nx, ny - sperm.r]
-  ];
+function isWall(px, py) {
+  const col = Math.floor((px - offsetX) / tile);
+  const row = Math.floor((py - offsetY) / tile);
 
-  return checks.some(([x,y])=>{
-    const c = Math.floor(x);
-    const r = Math.floor(y);
-    return maze[r]?.[c] === "#";
-  });
+  if (row < 0 || col < 0 || row >= rows || col >= cols) return true;
+  return maze[row][col] === "#";
+}
+
+function hitsWall(nx, ny) {
+  return (
+    isWall(nx + sperm.r, ny) ||
+    isWall(nx - sperm.r, ny) ||
+    isWall(nx, ny + sperm.r) ||
+    isWall(nx, ny - sperm.r)
+  );
 }
 
 /* =====================
@@ -118,11 +121,21 @@ function drawMaze() {
     [...row].forEach((cell,x)=>{
       if(cell==="#"){
         ctx.fillStyle="#1c4fd8";
-        ctx.fillRect(x*tile,y*tile,tile,tile);
+        ctx.fillRect(
+          offsetX + x * tile,
+          offsetY + y * tile,
+          tile,
+          tile
+        );
       }
       if(cell==="E"){
         ctx.fillStyle="#00ff99";
-        ctx.fillRect(x*tile,y*tile,tile,tile);
+        ctx.fillRect(
+          offsetX + x * tile,
+          offsetY + y * tile,
+          tile,
+          tile
+        );
       }
     });
   });
@@ -131,34 +144,40 @@ function drawMaze() {
 }
 
 /* =====================
-   DRAW REALISTIC SPERM
+   REALISTIC SPERM
 ===================== */
 function drawSperm() {
-  const px = sperm.x * tile;
-  const py = sperm.y * tile;
+  ctx.fillStyle="white";
 
   // head
-  ctx.fillStyle="white";
   ctx.beginPath();
-  ctx.ellipse(px,py,tile*0.35,tile*0.25,Math.sin(Date.now()/300)*0.2,0,Math.PI*2);
+  ctx.ellipse(
+    sperm.x,
+    sperm.y,
+    tile * 0.32,
+    tile * 0.22,
+    Math.sin(Date.now()/300)*0.25,
+    0,
+    Math.PI*2
+  );
   ctx.fill();
 
-  // tail (multi-segment)
+  // tail
   ctx.strokeStyle="white";
   ctx.lineWidth=2;
   ctx.beginPath();
-  ctx.moveTo(px - tile*0.3, py);
+  ctx.moveTo(sperm.x - tile*0.3, sperm.y);
   for(let i=1;i<=6;i++){
     ctx.lineTo(
-      px - tile*(0.3 + i*0.15),
-      py + Math.sin(Date.now()/120 + i)*6
+      sperm.x - tile*(0.3 + i*0.15),
+      sperm.y + Math.sin(Date.now()/120 + i)*6
     );
   }
   ctx.stroke();
 }
 
 /* =====================
-   MAZE LOOP
+   LOOP
 ===================== */
 function startMaze() {
   phase="maze";
@@ -191,9 +210,12 @@ window.addEventListener("keydown",e=>{
     sperm.y = ny;
   }
 
-  if(maze[Math.floor(sperm.y)][Math.floor(sperm.x)]==="E"){
+  const col = Math.floor((sperm.x - offsetX) / tile);
+  const row = Math.floor((sperm.y - offsetY) / tile);
+
+  if(maze[row]?.[col] === "E"){
     canvas.style.display="none";
     clearInterval(timer);
-    alert("MAZE COMPLETE — QUESTIONS NEXT");
+    alert("Maze complete — next stage!");
   }
 });
