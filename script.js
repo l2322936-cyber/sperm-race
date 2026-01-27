@@ -1,77 +1,66 @@
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 
+function resize() {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+}
+window.addEventListener("resize", resize);
+resize();
+
 /* ================= GLOBAL ================= */
-let playerName = "";
+let stage = "start";
 let time = 0;
 let timer;
-let stage = "start";
-
-/* ================= LEADERBOARD ================= */
-function getBoard() {
-  return JSON.parse(localStorage.getItem("spermBoard") || "[]");
-}
-function saveScore(n, t) {
-  const b = getBoard();
-  b.push({ n, t });
-  b.sort((a, b) => a.t - b.t);
-  localStorage.setItem("spermBoard", JSON.stringify(b.slice(0, 5)));
-}
-function renderBoard(el) {
-  el.innerHTML = "";
-  getBoard().forEach(s => {
-    const li = document.createElement("li");
-    li.textContent = `${s.n} — ${s.t}s`;
-    el.appendChild(li);
-  });
-}
-renderBoard(document.getElementById("board"));
 
 /* ================= START ================= */
 document.getElementById("startBtn").onclick = () => {
-  playerName = document.getElementById("nameInput").value || "Anonymous";
   document.getElementById("start").classList.remove("active");
   canvas.style.display = "block";
   stage = "maze";
-  time = 0;
   timer = setInterval(() => time++, 1000);
   mazeLoop();
 };
 
-/* ================= MAZE (MORE COMPLEX, SOLVABLE) ================= */
-const tile = 36;
+/* ================= HUGE HARD MAZE ================= */
 const maze = [
-"11111111111111111111111",
-"1S000000000000000100001",
-"101111111111111101110101",
-"100000000000000001000001",
-"111011111111111101011101",
-"100010000000000001000001",
-"101110111111111101110101",
-"101000100000001001000001",
-"101011101111101101110101",
-"1000000010000010000000E1",
-"11111111111111111111111"
+"1111111111111111111111111111111111111",
+"1S00000000000100000000000000000000001",
+"1011111111111011111111111111111111101",
+"1000000000000010000000000000000000101",
+"1111111111111010111111111111111110101",
+"1000000000000010100000000000000010101",
+"1011111111111010111111111111111010101",
+"1010000000000010000000000000010010101",
+"1010111111111111111111111111011010101",
+"1010100000000000000000000000010010101",
+"1010101111111111111111111111111010101",
+"1010101000000000000000000000000010101",
+"1010101011111111111111111111111110101",
+"1010101010000000000000000000000000101",
+"1010101010111111111111111111111111101",
+"1010000010000000000000000000000000001",
+"11111111111111111111111111111111111E1"
 ];
 
 const rows = maze.length;
 const cols = maze[0].length;
 
-canvas.width = cols * tile;
-canvas.height = rows * tile;
+const tileW = canvas.width / cols;
+const tileH = canvas.height / rows;
 
-let startPos, endPos;
+let start, end;
 for (let y = 0; y < rows; y++) {
   for (let x = 0; x < cols; x++) {
-    if (maze[y][x] === "S") startPos = { x, y };
-    if (maze[y][x] === "E") endPos = { x, y };
+    if (maze[y][x] === "S") start = { x, y };
+    if (maze[y][x] === "E") end = { x, y };
   }
 }
 
 const sperm = {
-  x: startPos.x * tile + tile / 2,
-  y: startPos.y * tile + tile / 2,
-  speed: 10
+  x: start.x * tileW + tileW / 2,
+  y: start.y * tileH + tileH / 2,
+  speed: Math.min(tileW, tileH) / 4
 };
 
 function drawMaze() {
@@ -79,30 +68,24 @@ function drawMaze() {
     for (let x = 0; x < cols; x++) {
       if (maze[y][x] === "1") {
         ctx.fillStyle = "#1e90ff";
-        ctx.fillRect(x * tile, y * tile, tile, tile);
+        ctx.fillRect(x * tileW, y * tileH, tileW, tileH);
       }
     }
   }
   ctx.fillStyle = "#00ff99";
-  ctx.fillRect(endPos.x * tile, endPos.y * tile, tile, tile);
+  ctx.fillRect(end.x * tileW, end.y * tileH, tileW, tileH);
 }
 
-function drawSperm(px = sperm.x, py = sperm.y) {
+function drawSperm() {
   ctx.fillStyle = "white";
   ctx.beginPath();
-  ctx.ellipse(px, py, 14, 9, 0, 0, Math.PI * 2);
+  ctx.ellipse(sperm.x, sperm.y, tileW / 3, tileH / 4, 0, 0, Math.PI * 2);
   ctx.fill();
-  ctx.strokeStyle = "white";
-  ctx.lineWidth = 2;
-  ctx.beginPath();
-  ctx.moveTo(px - 14, py);
-  ctx.lineTo(px - 32, py + Math.sin(Date.now() / 90) * 6);
-  ctx.stroke();
 }
 
-function isWall(px, py) {
-  const c = Math.floor(px / tile);
-  const r = Math.floor(py / tile);
+function wall(px, py) {
+  const c = Math.floor(px / tileW);
+  const r = Math.floor(py / tileH);
   return maze[r]?.[c] === "1";
 }
 
@@ -113,8 +96,8 @@ document.addEventListener("keydown", e => {
   if (e.key === "ArrowDown") dy = sperm.speed;
   if (e.key === "ArrowLeft") dx = -sperm.speed;
   if (e.key === "ArrowRight") dx = sperm.speed;
-  if (!isWall(sperm.x + dx, sperm.y)) sperm.x += dx;
-  if (!isWall(sperm.x, sperm.y + dy)) sperm.y += dy;
+  if (!wall(sperm.x + dx, sperm.y)) sperm.x += dx;
+  if (!wall(sperm.x, sperm.y + dy)) sperm.y += dy;
 });
 
 function mazeLoop() {
@@ -122,16 +105,18 @@ function mazeLoop() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   drawMaze();
   drawSperm();
+
   if (
-    Math.floor(sperm.x / tile) === endPos.x &&
-    Math.floor(sperm.y / tile) === endPos.y
+    Math.floor(sperm.x / tileW) === end.x &&
+    Math.floor(sperm.y / tileH) === end.y
   ) {
+    clearInterval(timer);
     stage = "questions";
     canvas.style.display = "none";
     document.getElementById("questions").classList.add("active");
-    showQuestion();
     return;
   }
+
   requestAnimationFrame(mazeLoop);
 }
 
