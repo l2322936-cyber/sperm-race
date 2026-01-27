@@ -1,39 +1,39 @@
 html, body {
   margin: 0;
   padding: 0;
-  background: #041b2d;
+  overflow: hidden;
+  background: #000;
   color: white;
   font-family: Arial, sans-serif;
-  overflow: hidden;
 }
 
 canvas {
   display: none;
-  background: #0b3c5d;
+  background: #001a33;
 }
 
 .screen {
-  position: fixed;
-  inset: 0;
   display: none;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  z-index: 2;
+  position: absolute;
+  inset: 0;
+  background: #000;
+  text-align: center;
+  padding-top: 15vh;
 }
 
 .screen.active {
-  display: flex;
+  display: block;
 }
 
 button {
   padding: 15px 30px;
   font-size: 18px;
-  margin: 10px;
-  cursor: pointer;
+  margin-top: 20px;
 }
 
-input {
-  padding: 10px;
+#answers button {
+  display: block;
+  width: 90%;
+  margin: 15px auto;
   font-size: 18px;
 }
