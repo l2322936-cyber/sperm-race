@@ -1,5 +1,9 @@
+/* =========================
+   CANVAS + GLOBAL STATE
+========================= */
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
+
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
 
@@ -7,72 +11,102 @@ let stage = "start";
 let time = 0;
 let timer;
 
-/* =====================
-   START
-===================== */
+/* =========================
+   START BUTTON
+========================= */
 function startGame() {
+  stage = "maze";
   document.getElementById("start").classList.remove("active");
   canvas.style.display = "block";
-  stage = "maze";
+
   time = 0;
   timer = setInterval(() => time++, 1000);
+
   initMaze();
+  mazeLoop();
 }
 
-/* =====================
-   MAZE (SOLVABLE)
-===================== */
-const tile = 50;
+/* =========================
+   MAZE DATA (SOLVABLE)
+========================= */
+/*
+  1 = wall
+  0 = path
+  S = start
+  E = end
+*/
+
 const mazeMap = [
-  "111111111111111111111",
-  "1S0000000000010000001",
-  "101111111111101011101",
-  "100000000000001000001",
-  "111011111111111110111",
-  "100010000000000010001",
-  "101110111111111011101",
-  "101000100000001000001",
-  "101011101111101111101",
-  "1000000010000000000E1",
-  "111111111111111111111"
+  "1111111111111111111111111",
+  "1S00000000000000100000001",
+  "1011111111111111010111111",
+  "1000000000000000010000001",
+  "1111110111111111110111101",
+  "1000010000000000000100001",
+  "1011011111111111111101101",
+  "1010010000000000000001001",
+  "1011110111111111111101111",
+  "1000000100000000000100001",
+  "1111101110111111110111101",
+  "1000000000100000010000001",
+  "1011111111110111111111101",
+  "10000000000001000000000E1",
+  "1111111111111111111111111"
 ];
+
 const rows = mazeMap.length;
 const cols = mazeMap[0].length;
 
-// scale tiles to fill screen
+/* =========================
+   TILE SCALING + CENTERING
+========================= */
 const tileSize = Math.floor(
   Math.min(window.innerWidth / cols, window.innerHeight / rows)
 );
 
-// center maze
-const offsetX = Math.floor((window.innerWidth - cols * tileSize) / 2);
-const offsetY = Math.floor((window.innerHeight - rows * tileSize) / 2);
+const offsetX = Math.floor((canvas.width - cols * tileSize) / 2);
+const offsetY = Math.floor((canvas.height - rows * tileSize) / 2);
 
-canvas.width = window.innerWidth;
-canvas.height = window.innerHeight;
-
-
-let startPos, endPos;
+/* =========================
+   FIND START + END
+========================= */
+let startPos = { x: 1, y: 1 };
+let endPos = { x: cols - 2, y: rows - 2 };
 
 for (let y = 0; y < rows; y++) {
   for (let x = 0; x < cols; x++) {
-    if (maze[y][x] === "S") startPos = { x, y };
-    if (maze[y][x] === "E") endPos = { x, y };
+    if (mazeMap[y][x] === "S") startPos = { x, y };
+    if (mazeMap[y][x] === "E") endPos = { x, y };
   }
-   function drawMaze() {
+}
+
+/* =========================
+   PLAYER (SPERM)
+========================= */
+const sperm = {
+  x: 0,
+  y: 0,
+  speed: 6, // fast + smooth
+  radius: tileSize * 0.3
+};
+
+function initMaze() {
+  sperm.x = offsetX + startPos.x * tileSize + tileSize / 2;
+  sperm.y = offsetY + startPos.y * tileSize + tileSize / 2;
+}
+
+/* =========================
+   DRAW MAZE
+========================= */
+function drawMaze() {
   for (let y = 0; y < rows; y++) {
     for (let x = 0; x < cols; x++) {
-      const tile = mazeMap[y][x];
+      let tile = mazeMap[y][x];
 
-      if (tile === "1") {
-        ctx.fillStyle = "#1e90ff"; // wall
-      } else if (tile === "S") {
-        ctx.fillStyle = "#00ff99"; // start
-      } else if (tile === "E") {
-        ctx.fillStyle = "#ffd700"; // end
-      } else {
-        ctx.fillStyle = "#001a33"; // path
-      }
+      if (tile === "1") ctx.fillStyle = "#1e90ff";
+      else if (tile === "S") ctx.fillStyle = "#00ff99";
+      else if (tile === "E") ctx.fillStyle = "#ffd700";
+      else ctx.fillStyle = "#001428";
 
       ctx.fillRect(
         offsetX + x * tileSize,
@@ -84,105 +118,90 @@ for (let y = 0; y < rows; y++) {
   }
 }
 
-}
-
-/* =====================
-   SPERM PLAYER
-===================== */
-const sperm = {
-  x: 0,
-  y: 0,
-  r: 12,
-  speed: 8,
-  tail: []
-};
-
-function initMaze() {
-  sperm.x = startPos.x * tile + tile / 2;
-  sperm.y = startPos.y * tile + tile / 2;
-  requestAnimationFrame(mazeLoop);
-}
-
+/* =========================
+   COLLISION
+========================= */
 function isWall(px, py) {
   const col = Math.floor((px - offsetX) / tileSize);
   const row = Math.floor((py - offsetY) / tileSize);
 
-  if (
-    row < 0 || col < 0 ||
-    row >= rows || col >= cols
-  ) return true;
-
+  if (row < 0 || col < 0 || row >= rows || col >= cols) return true;
   return mazeMap[row][col] === "1";
 }
 
-/* =====================
-   MAZE LOOP
-===================== */
-function mazeLoop() {
-  if (stage !== "maze") return;
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-drawMaze();
-  for (let y = 0; y < rows; y++) {
-    for (let x = 0; x < cols; x++) {
-      if (maze[y][x] === "1") {
-        ctx.fillStyle = "#0a4cff";
-        ctx.fillRect(x * tile, y * tile, tile, tile);
-      }
-    }
-  }
+/* =========================
+   MOVEMENT
+========================= */
+function move(dx, dy) {
+  const nx = sperm.x + dx;
+  const ny = sperm.y + dy;
 
-  drawSperm();
+  if (!isWall(nx, sperm.y)) sperm.x = nx;
+  if (!isWall(sperm.x, ny)) sperm.y = ny;
+}
 
-  const cx = Math.floor(sperm.x / tile);
-  const cy = Math.floor(sperm.y / tile);
+/* =========================
+   DRAW SPERM (ANIMATED TAIL)
+========================= */
+function drawSperm() {
+  // head
+  ctx.fillStyle = "#ffffff";
+  ctx.beginPath();
+  ctx.ellipse(sperm.x, sperm.y, sperm.radius, sperm.radius * 0.7, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // tail (animated)
+  ctx.strokeStyle = "#ffffff";
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(sperm.x - sperm.radius, sperm.y);
+
+  const wiggle = Math.sin(Date.now() / 120) * 8;
+  ctx.lineTo(sperm.x - sperm.radius * 2.5, sperm.y + wiggle);
+  ctx.stroke();
+}
+
+/* =========================
+   MAZE WIN CHECK
+========================= */
+function checkMazeWin() {
+  const cx = Math.floor((sperm.x - offsetX) / tileSize);
+  const cy = Math.floor((sperm.y - offsetY) / tileSize);
+
   if (cx === endPos.x && cy === endPos.y) {
-    stage = "questions";
+    clearInterval(timer);
+    stage = "questions"; // NEXT PHASE
     canvas.style.display = "none";
     document.getElementById("questions").classList.add("active");
-    loadQuestion();
-    return;
+    if (typeof loadQuestion === "function") loadQuestion();
   }
+}
+
+/* =========================
+   GAME LOOP
+========================= */
+function mazeLoop() {
+  if (stage !== "maze") return;
+
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  drawMaze();
+  drawSperm();
+  checkMazeWin();
 
   requestAnimationFrame(mazeLoop);
 }
 
-/* =====================
-   SPERM DRAW
-===================== */
-function drawSperm() {
-  sperm.tail.push({ x: sperm.x, y: sperm.y });
-  if (sperm.tail.length > 15) sperm.tail.shift();
-
-  ctx.strokeStyle = "#fff";
-  ctx.lineWidth = 2;
-  ctx.beginPath();
-  sperm.tail.forEach((p, i) => {
-    if (i === 0) ctx.moveTo(p.x, p.y);
-    else ctx.lineTo(p.x, p.y + Math.sin(Date.now() / 80) * 4);
-  });
-  ctx.stroke();
-
-  ctx.fillStyle = "#fff";
-  ctx.beginPath();
-  ctx.ellipse(sperm.x, sperm.y, 14, 9, 0, 0, Math.PI * 2);
-  ctx.fill();
-}
-
-/* =====================
+/* =========================
    CONTROLS
-===================== */
+========================= */
 document.addEventListener("keydown", e => {
   if (stage !== "maze") return;
-  let dx = 0, dy = 0;
-  if (e.key === "ArrowUp") dy = -sperm.speed;
-  if (e.key === "ArrowDown") dy = sperm.speed;
-  if (e.key === "ArrowLeft") dx = -sperm.speed;
-  if (e.key === "ArrowRight") dx = sperm.speed;
 
-  if (!isWall(sperm.x + dx, sperm.y)) sperm.x += dx;
-  if (!isWall(sperm.x, sperm.y + dy)) sperm.y += dy;
+  if (e.key === "ArrowUp") move(0, -sperm.speed);
+  if (e.key === "ArrowDown") move(0, sperm.speed);
+  if (e.key === "ArrowLeft") move(-sperm.speed, 0);
+  if (e.key === "ArrowRight") move(sperm.speed, 0);
 });
-
 /* =====================
    QUESTIONS
 ===================== */
