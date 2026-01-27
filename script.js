@@ -23,25 +23,34 @@ function startGame() {
    MAZE (SOLVABLE)
 ===================== */
 const tile = 50;
-const maze = [
-  "11111111111111111111",
-  "1S000000001000000001",
-  "10111111110111111101",
-  "10000000000100000001",
-  "11101111111101111111",
-  "10001000000001000001",
-  "10111011111111011101",
-  "10100010000000010001",
-  "10101110111111110101",
-  "10000000100000000E01",
-  "11111111111111111111"
+const mazeMap = [
+  "111111111111111111111",
+  "1S0000000000010000001",
+  "101111111111101011101",
+  "100000000000001000001",
+  "111011111111111110111",
+  "100010000000000010001",
+  "101110111111111011101",
+  "101000100000001000001",
+  "101011101111101111101",
+  "1000000010000000000E1",
+  "111111111111111111111"
 ];
+const rows = mazeMap.length;
+const cols = mazeMap[0].length;
 
-const rows = maze.length;
-const cols = maze[0].length;
+// scale tiles to fill screen
+const tileSize = Math.floor(
+  Math.min(window.innerWidth / cols, window.innerHeight / rows)
+);
 
-canvas.width = cols * tile;
-canvas.height = rows * tile;
+// center maze
+const offsetX = Math.floor((window.innerWidth - cols * tileSize) / 2);
+const offsetY = Math.floor((window.innerHeight - rows * tileSize) / 2);
+
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+
 
 let startPos, endPos;
 
@@ -50,6 +59,31 @@ for (let y = 0; y < rows; y++) {
     if (maze[y][x] === "S") startPos = { x, y };
     if (maze[y][x] === "E") endPos = { x, y };
   }
+   function drawMaze() {
+  for (let y = 0; y < rows; y++) {
+    for (let x = 0; x < cols; x++) {
+      const tile = mazeMap[y][x];
+
+      if (tile === "1") {
+        ctx.fillStyle = "#1e90ff"; // wall
+      } else if (tile === "S") {
+        ctx.fillStyle = "#00ff99"; // start
+      } else if (tile === "E") {
+        ctx.fillStyle = "#ffd700"; // end
+      } else {
+        ctx.fillStyle = "#001a33"; // path
+      }
+
+      ctx.fillRect(
+        offsetX + x * tileSize,
+        offsetY + y * tileSize,
+        tileSize,
+        tileSize
+      );
+    }
+  }
+}
+
 }
 
 /* =====================
@@ -69,11 +103,16 @@ function initMaze() {
   requestAnimationFrame(mazeLoop);
 }
 
-function isWall(x, y) {
-  const c = Math.floor(x / tile);
-  const r = Math.floor(y / tile);
-  if (r < 0 || c < 0 || r >= rows || c >= cols) return true;
-  return maze[r][c] === "1";
+function isWall(px, py) {
+  const col = Math.floor((px - offsetX) / tileSize);
+  const row = Math.floor((py - offsetY) / tileSize);
+
+  if (
+    row < 0 || col < 0 ||
+    row >= rows || col >= cols
+  ) return true;
+
+  return mazeMap[row][col] === "1";
 }
 
 /* =====================
@@ -82,7 +121,7 @@ function isWall(x, y) {
 function mazeLoop() {
   if (stage !== "maze") return;
   ctx.clearRect(0, 0, canvas.width, canvas.height);
-
+drawMaze();
   for (let y = 0; y < rows; y++) {
     for (let x = 0; x < cols; x++) {
       if (maze[y][x] === "1") {
