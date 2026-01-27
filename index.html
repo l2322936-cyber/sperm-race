@@ -41,5 +41,27 @@
 </div>
 
 <script src="script.js"></script>
-</body>
+</body <!-- QUESTION SCREEN -->
+<div id="questionScreen" style="display:none; text-align:center;">
+  <h2 id="questionText"></h2>
+  <div id="answers"></div>
+</div>
+
+<!-- FLAPPY SPERM SCREEN -->
+<div id="flappyScreen" style="display:none; text-align:center;">
+  <h1>Flappy Sperm</h1>
+  <p id="flappyInstructions">
+    Flappy Sperm. The longer you go, the more time gets taken off your timer.<br>
+    Use the arrow keys.
+  </p>
+  <canvas id="flappyCanvas" width="400" height="600" style="display:none;"></canvas>
+</div>
+
+<!-- END SCREEN -->
+<div id="endScreen" style="display:none; text-align:center;">
+  <h2>Leaderboard</h2>
+  <div id="leaderboard"></div>
+  <button onclick="restartGame()">Restart</button>
+</div>
+>
 </html>
