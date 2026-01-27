@@ -7,61 +7,35 @@
 </head>
 <body>
 
-<div id="startScreen" class="screen active">
+<div id="startScreen" class="screen">
   <h1>Sperm Race</h1>
-  <input id="nameInput" placeholder="Enter your name">
-  <button id="startBtn">Start</button>
-  <h2>Leaderboard</h2>
-  <ul id="leaderboard"></ul>
+  <input id="playerName" placeholder="Enter name">
+  <button onclick="startGame()">Start</button>
 </div>
 
-<canvas id="mazeCanvas"></canvas>
+<canvas id="mazeCanvas" class="hidden"></canvas>
 
-<div id="questionScreen" class="screen">
-  <div id="questionBox"></div>
-</div>
-
-<div id="flappyIntro" class="screen">
-  <h1>Flappy Sperm</h1>
-  <p>
-    The longer you survive, the more time is removed.<br>
-    Use the arrow keys.<br><br>
-    Press any arrow key to start.
-  </p>
-</div>
-
-<canvas id="flappyCanvas"></canvas>
-
-<div id="endScreen" class="screen">
-  <h1>Finished</h1>
-  <p id="finalScore"></p>
-  <button onclick="location.reload()">Restart</button>
-  <h2>Leaderboard</h2>
-  <ul id="leaderboardEnd"></ul>
-</div>
-
-<script src="script.js"></script>
-</body <!-- QUESTION SCREEN -->
-<div id="questionScreen" style="display:none; text-align:center;">
+<div id="questionScreen" class="screen hidden">
   <h2 id="questionText"></h2>
   <div id="answers"></div>
 </div>
 
-<!-- FLAPPY SPERM SCREEN -->
-<div id="flappyScreen" style="display:none; text-align:center;">
+<div id="flappyScreen" class="screen hidden">
   <h1>Flappy Sperm</h1>
-  <p id="flappyInstructions">
-    Flappy Sperm. The longer you go, the more time gets taken off your timer.<br>
+  <p id="flappyText">
+    Flappy Sperm.<br>
+    The longer you go, the more time gets taken off your timer.<br>
     Use the arrow keys.
   </p>
-  <canvas id="flappyCanvas" width="400" height="600" style="display:none;"></canvas>
+  <canvas id="flappyCanvas" width="400" height="600" class="hidden"></canvas>
 </div>
 
-<!-- END SCREEN -->
-<div id="endScreen" style="display:none; text-align:center;">
-  <h2>Leaderboard</h2>
-  <div id="leaderboard"></div>
-  <button onclick="restartGame()">Restart</button>
+<div id="endScreen" class="screen hidden">
+  <h1>Finished</h1>
+  <div id="results"></div>
+  <button onclick="location.reload()">Restart</button>
 </div>
->
+
+<script src="script.js"></script>
+</body>
 </html>
