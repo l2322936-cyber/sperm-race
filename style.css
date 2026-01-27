@@ -7,6 +7,14 @@ html, body {
   overflow: hidden;
 }
 
+#canvasWrap {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
 canvas {
   display: none;
   background: #0b3c5d;
@@ -34,15 +42,14 @@ button {
 }
 
 #answers {
-  display: grid;
-  grid-template-columns: 1fr;
   width: 80%;
 }
 
 #answers button {
   font-size: 24px;
-  margin: 10px 0;
+  margin: 12px 0;
   padding: 20px;
+  width: 100%;
 }
 
 input {
