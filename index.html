@@ -1,40 +1,41 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>Sperm Race</title>
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
 
-<div id="startScreen" class="screen">
+<div id="start" class="screen active">
   <h1>Sperm Race</h1>
-  <input id="playerName" placeholder="Enter name">
-  <button onclick="startGame()">Start</button>
+  <input id="nameInput" placeholder="Enter your name" />
+  <button id="startBtn">Start</button>
+
+  <h2>Leaderboard</h2>
+  <ul id="board"></ul>
 </div>
 
-<canvas id="mazeCanvas" class="hidden"></canvas>
-
-<div id="questionScreen" class="screen hidden">
-  <h2 id="questionText"></h2>
+<div id="questions" class="screen">
+  <h2 id="qText"></h2>
   <div id="answers"></div>
 </div>
 
-<div id="flappyScreen" class="screen hidden">
+<div id="flappyInfo" class="screen">
   <h1>Flappy Sperm</h1>
-  <p id="flappyText">
-    Flappy Sperm.<br>
-    The longer you go, the more time gets taken off your timer.<br>
-    Use the arrow keys.
-  </p>
-  <canvas id="flappyCanvas" width="400" height="600" class="hidden"></canvas>
+  <p>The longer you survive, the more time is removed.</p>
+  <p>Use the arrow keys to swim.</p>
 </div>
 
-<div id="endScreen" class="screen hidden">
-  <h1>Finished</h1>
-  <div id="results"></div>
+<div id="end" class="screen">
+  <h1>Finished!</h1>
+  <p id="finalTime"></p>
+  <h2>Leaderboard</h2>
+  <ul id="finalBoard"></ul>
   <button onclick="location.reload()">Restart</button>
 </div>
+
+<canvas id="game"></canvas>
 
 <script src="script.js"></script>
 </body>
