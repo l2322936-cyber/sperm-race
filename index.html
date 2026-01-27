@@ -10,7 +10,21 @@
 <!-- START SCREEN -->
 <div id="start" class="screen active">
   <h1>Sperm Race</h1>
-  <input id="nameInput" placeholder="Enter your name" />
+  <input
+  id="nameInput"
+  type="text"
+  placeholder="Enter your name"
+  style="
+    width: 60%;
+    height: 60px;
+    font-size: 28px;
+    text-align: center;
+    border-radius: 12px;
+    margin: 20px 0;
+  "
+> 
+  <h2>🏆 Leaderboard</h2>
+<ul id="startBoard" style="font-size:22px; list-style:none; padding:0;"></ul>
   <button onclick="startGame()">Start</button>
 </div>
 
