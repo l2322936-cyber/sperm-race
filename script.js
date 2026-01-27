@@ -219,3 +219,113 @@ window.addEventListener("keydown",e=>{
     alert("Maze complete — next stage!");
   }
 });
+const questions = [
+  {
+    q: "What is the main purpose of sperm?",
+    a: ["Movement", "Reproduction", "Digestion"],
+    correct: 1
+  },
+  {
+    q: "Where does fertilization usually occur?",
+    a: ["Uterus", "Ovary", "Fallopian tube"],
+    correct: 2
+  }
+];
+
+let currentQuestion = 0;
+let timeLeft = 60;
+function startQuestions() {
+  document.getElementById("mazeCanvas").style.display = "none";
+  document.getElementById("questionScreen").style.display = "block";
+  showQuestion();
+}
+
+function showQuestion() {
+  const q = questions[currentQuestion];
+  document.getElementById("questionText").innerText = q.q;
+
+  const answersDiv = document.getElementById("answers");
+  answersDiv.innerHTML = "";
+
+  q.a.forEach((text, index) => {
+    const btn = document.createElement("button");
+    btn.innerText = text;
+    btn.onclick = () => answerQuestion(index);
+    answersDiv.appendChild(btn);
+  });
+}
+
+function answerQuestion(choice) {
+  if (choice === questions[currentQuestion].correct) {
+    timeLeft -= 5;
+  } else {
+    timeLeft += 5;
+  }
+
+  currentQuestion++;
+  if (currentQuestion < questions.length) {
+    showQuestion();
+  } else {
+    startFlappy();
+  }
+}
+const flappyCanvas = document.getElementById("flappyCanvas");
+const fctx = flappyCanvas.getContext("2d");
+
+let spermY = 300;
+let velocity = 0;
+let gravity = 0.5;
+let flappyRunning = false;
+function startFlappy() {
+  document.getElementById("questionScreen").style.display = "none";
+  document.getElementById("flappyScreen").style.display = "block";
+
+  document.addEventListener("keydown", startFlappyGame, { once: true });
+}
+function startFlappyGame() {
+  document.getElementById("flappyInstructions").style.display = "none";
+  flappyCanvas.style.display = "block";
+  flappyRunning = true;
+
+  setInterval(() => {
+    if (flappyRunning) timeLeft--;
+  }, 2000);
+
+  requestAnimationFrame(flappyLoop);
+}
+document.addEventListener("keydown", e => {
+  if (flappyRunning && e.key.includes("Arrow")) {
+    velocity = -7;
+  }
+});
+function flappyLoop() {
+  if (!flappyRunning) return;
+
+  fctx.clearRect(0, 0, flappyCanvas.width, flappyCanvas.height);
+
+  velocity += gravity;
+  spermY += velocity;
+
+  // sperm
+  fctx.font = "30px serif";
+  fctx.fillText("🧬", 180, spermY);
+
+  if (spermY > flappyCanvas.height || spermY < 0) {
+    endGame();
+    return;
+  }
+
+  requestAnimationFrame(flappyLoop);
+}
+function endGame() {
+  flappyRunning = false;
+  document.getElementById("flappyScreen").style.display = "none";
+  document.getElementById("endScreen").style.display = "block";
+
+  document.getElementById("leaderboard").innerHTML =
+    `<p>Final Time: ${timeLeft}s</p>`;
+}
+
+function restartGame() {
+  location.reload();
+}
