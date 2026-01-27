@@ -1,33 +1,51 @@
 html, body {
   margin: 0;
   padding: 0;
-  overflow: hidden;
-  background: #0aa;
-  font-family: Arial, sans-serif;
+  background: #041b2d;
   color: white;
+  font-family: Arial, sans-serif;
+  overflow: hidden;
 }
 
 canvas {
-  display: block;
-  margin: auto;
-  background: #9ee;
+  display: none;
+  background: #0b3c5d;
 }
 
 .screen {
   position: absolute;
   inset: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-}
-
-button, input {
-  padding: 10px 20px;
-  font-size: 16px;
-  margin: 10px;
-}
-
-.hidden {
   display: none;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  z-index: 2;
+}
+
+.screen.active {
+  display: flex;
+}
+
+button {
+  padding: 15px 30px;
+  font-size: 18px;
+  margin: 10px;
+  cursor: pointer;
+}
+
+#answers {
+  display: grid;
+  grid-template-columns: 1fr;
+  width: 80%;
+}
+
+#answers button {
+  font-size: 24px;
+  margin: 10px 0;
+  padding: 20px;
+}
+
+input {
+  padding: 10px;
+  font-size: 18px;
 }
