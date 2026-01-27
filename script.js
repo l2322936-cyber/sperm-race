@@ -1,82 +1,104 @@
 /* ========= GLOBAL ========= */
 let time = 60;
-let playerName = "";
-let currentQuestion = 0;
-let gamePhase = "start";
+let name = "";
+let phase = "start";
+let timerInterval;
 
-/* ========= ELEMENTS ========= */
-const startScreen = document.getElementById("startScreen");
-const mazeCanvas = document.getElementById("mazeCanvas");
-const questionScreen = document.getElementById("questionScreen");
-const flappyIntro = document.getElementById("flappyIntro");
-const flappyCanvas = document.getElementById("flappyCanvas");
-const endScreen = document.getElementById("endScreen");
-
-const mCtx = mazeCanvas.getContext("2d");
+/* ========= STORAGE ========= */
+function getBoard() {
+  return JSON.parse(localStorage.getItem("spermBoard") || "[]");
+}
+function saveScore(n, t) {
+  const b = getBoard();
+  b.push({ n, t });
+  b.sort((a,b)=>a.t-b.t);
+  localStorage.setItem("spermBoard", JSON.stringify(b.slice(0,5)));
+}
+function renderBoard(id) {
+  const el = document.getElementById(id);
+  el.innerHTML = "";
+  getBoard().forEach(s=>{
+    const li=document.createElement("li");
+    li.textContent=`${s.n}: ${s.t}s`;
+    el.appendChild(li);
+  });
+}
+renderBoard("leaderboard");
 
 /* ========= START ========= */
 document.getElementById("startBtn").onclick = () => {
-  playerName = document.getElementById("nameInput").value.trim();
-  if (!playerName) return alert("Enter your name");
+  name = document.getElementById("nameInput").value.trim();
+  if (!name) return alert("Enter a name");
 
-  startScreen.classList.remove("active");
+  document.getElementById("startScreen").classList.remove("active");
+  startTimer();
   startMaze();
 };
 
+function startTimer(){
+  timerInterval = setInterval(()=>time++,1000);
+}
+
 /* ========= MAZE ========= */
-mazeCanvas.width = window.innerWidth;
-mazeCanvas.height = window.innerHeight;
+const mazeCanvas = document.getElementById("mazeCanvas");
+const m = mazeCanvas.getContext("2d");
+mazeCanvas.width = innerWidth;
+mazeCanvas.height = innerHeight;
 
 const maze = [
-"########################",
-"#S     #         #     #",
-"##### ### ##### ### ### #",
-"#     #     #   #     # #",
-"# ### ##### # ##### ### #",
-"#   #     # #     #     #",
-"### ##### # ##### #######",
-"#     #   #     #       #",
-"# ### # ##### ### ##### #",
-"#     #         #     E#",
-"########################"
+"###########################",
+"#S     #   #         #    #",
+"### ### ### # ##### ### ## #",
+"#   #     # #     #     #  #",
+"# ### ##### ##### ##### ####",
+"#   #     #     #   #      #",
+"##### ### ##### ### ### ####",
+"#     #   #     #     #    #",
+"# ### ### ##### ##### #### #",
+"#     #         #        E#",
+"###########################"
 ];
 
-let px = 1.5, py = 1.5;
 const cell = Math.min(
   mazeCanvas.width / maze[0].length,
   mazeCanvas.height / maze.length
 );
-const speed = 0.15;
 
-function drawSperm(x, y) {
-  const cx = x * cell + cell / 2;
-  const cy = y * cell + cell / 2;
+let px = 1.5, py = 1.5;
+const speed = 0.19; // 25% faster
+
+function drawSperm(x,y){
+  const cx = x*cell+cell/2;
+  const cy = y*cell+cell/2;
 
   // head
-  mCtx.fillStyle = "white";
-  mCtx.beginPath();
-  mCtx.ellipse(cx, cy, cell/3, cell/4, 0, 0, Math.PI * 2);
-  mCtx.fill();
+  m.fillStyle="white";
+  m.beginPath();
+  m.ellipse(cx,cy,cell/3,cell/4,0,0,Math.PI*2);
+  m.fill();
 
   // tail
-  mCtx.strokeStyle = "white";
-  mCtx.beginPath();
-  mCtx.moveTo(cx - cell/3, cy);
-  mCtx.lineTo(cx - cell, cy + Math.sin(Date.now()/100)*10);
-  mCtx.stroke();
+  m.strokeStyle="white";
+  m.beginPath();
+  m.moveTo(cx-cell/3,cy);
+  m.lineTo(
+    cx-cell,
+    cy+Math.sin(Date.now()/90)*10
+  );
+  m.stroke();
 }
 
-function drawMaze() {
-  mCtx.clearRect(0,0,mazeCanvas.width,mazeCanvas.height);
+function drawMaze(){
+  m.clearRect(0,0,mazeCanvas.width,mazeCanvas.height);
   maze.forEach((row,y)=>{
     [...row].forEach((c,x)=>{
       if(c==="#"){
-        mCtx.fillStyle="#002244";
-        mCtx.fillRect(x*cell,y*cell,cell,cell);
+        m.fillStyle="#0a2d4a";
+        m.fillRect(x*cell,y*cell,cell,cell);
       }
       if(c==="E"){
-        mCtx.fillStyle="gold";
-        mCtx.fillRect(x*cell,y*cell,cell,cell);
+        m.fillStyle="#00ff99";
+        m.fillRect(x*cell,y*cell,cell,cell);
       }
     });
   });
@@ -84,13 +106,19 @@ function drawMaze() {
 }
 
 function startMaze(){
-  gamePhase="maze";
+  phase="maze";
   mazeCanvas.style.display="block";
+  requestAnimationFrame(loopMaze);
+}
+
+function loopMaze(){
+  if(phase!=="maze") return;
   drawMaze();
+  requestAnimationFrame(loopMaze);
 }
 
 window.addEventListener("keydown",e=>{
-  if(gamePhase==="maze"){
+  if(phase==="maze"){
     let nx=px, ny=py;
     if(e.key==="ArrowUp") ny-=speed;
     if(e.key==="ArrowDown") ny+=speed;
@@ -103,13 +131,16 @@ window.addEventListener("keydown",e=>{
 
     if(maze[Math.floor(py)][Math.floor(px)]==="E"){
       mazeCanvas.style.display="none";
-      loadQuestion();
+      startQuestions();
     }
-    drawMaze();
   }
 
-  if(gamePhase==="flappyIntro"){
+  if(phase==="flappyIntro"){
     startFlappy();
+  }
+
+  if(phase==="flappy" && e.key.startsWith("Arrow")){
+    vy = -7;
   }
 });
 
@@ -127,45 +158,91 @@ const questions = [
 ["What cell is fertilized?","Egg","Zygote","Embryo","Fetus",0]
 ];
 
-function loadQuestion(){
-  gamePhase="questions";
-  questionScreen.classList.add("active");
-  const q=questions[currentQuestion];
+let qi=0;
+
+function startQuestions(){
+  phase="questions";
+  document.getElementById("questionScreen").classList.add("active");
+  showQ();
+}
+
+function showQ(){
+  const q=questions[qi];
   const box=document.getElementById("questionBox");
   box.innerHTML=`<h2>${q[0]}</h2>`+
-  q.slice(1,5).map((a,i)=>`<div class="answer" onclick="answer(${i})">${a}</div>`).join("");
+    q.slice(1,5).map((a,i)=>`<div class="answer" onclick="answer(${i})">${a}</div>`).join("");
 }
 
 function answer(i){
-  if(i===questions[currentQuestion][5]) time-=5;
+  if(i===questions[qi][5]) time-=5;
   else time+=5;
 
-  currentQuestion++;
-  if(currentQuestion>=questions.length){
-    questionScreen.classList.remove("active");
+  qi++;
+  if(qi>=questions.length){
+    document.getElementById("questionScreen").classList.remove("active");
     showFlappyIntro();
-  } else loadQuestion();
+  } else showQ();
 }
 
 /* ========= FLAPPY ========= */
+const flappyCanvas=document.getElementById("flappyCanvas");
+const f=flappyCanvas.getContext("2d");
+flappyCanvas.width=innerWidth;
+flappyCanvas.height=innerHeight;
+
+let fy, vy, pipes, flappyTimer;
+
 function showFlappyIntro(){
-  gamePhase="flappyIntro";
-  flappyIntro.classList.add("active");
+  phase="flappyIntro";
+  document.getElementById("flappyIntro").classList.add("active");
+  clearInterval(timerInterval);
 }
 
 function startFlappy(){
-  gamePhase="flappy";
-  flappyIntro.classList.remove("active");
+  phase="flappy";
+  document.getElementById("flappyIntro").classList.remove("active");
   flappyCanvas.style.display="block";
 
-  setInterval(()=>time--,2000);
-  setTimeout(endGame,15000);
+  fy=flappyCanvas.height/2;
+  vy=0;
+  pipes=[];
+  flappyTimer=setInterval(()=>time--,2000);
+  requestAnimationFrame(flappyLoop);
+}
+
+function flappyLoop(){
+  if(phase!=="flappy") return;
+
+  f.clearRect(0,0,flappyCanvas.width,flappyCanvas.height);
+  vy+=0.5;
+  fy+=vy;
+
+  drawSperm(2,fy/cell);
+
+  if(Math.random()<0.02)
+    pipes.push({x:flappyCanvas.width,g:200+Math.random()*200});
+
+  pipes.forEach(p=>{
+    p.x-=4;
+    f.fillRect(p.x,0,40,p.g-120);
+    f.fillRect(p.x,p.g+120,40,flappyCanvas.height);
+  });
+
+  if(fy<0||fy>flappyCanvas.height){
+    endGame();
+    return;
+  }
+
+  requestAnimationFrame(flappyLoop);
 }
 
 /* ========= END ========= */
 function endGame(){
+  clearInterval(flappyTimer);
+  saveScore(name,time);
   flappyCanvas.style.display="none";
-  endScreen.classList.add("active");
-  document.getElementById("finalScore").innerText=
-    `${playerName}'s Time: ${time}s`;
+  document.getElementById("endScreen").classList.add("active");
+  document.getElementById("finalScore").textContent=
+    `${name} finished with ${time}s`;
+  renderBoard("leaderboardEnd");
 }
