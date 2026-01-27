@@ -88,7 +88,7 @@ const sperm = {
   x: offsetX + tile * 1.5,
   y: offsetY + tile * 1.5,
   r: tile * 0.22,
-  speed: tile * 0.08 // fast but precise
+  speed: tile * 0.16 // fast but precise
 };
 
 /* =====================
