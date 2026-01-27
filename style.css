@@ -7,21 +7,13 @@ html, body {
   overflow: hidden;
 }
 
-#canvasWrap {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
 canvas {
   display: none;
   background: #0b3c5d;
 }
 
 .screen {
-  position: absolute;
+  position: fixed;
   inset: 0;
   display: none;
   flex-direction: column;
@@ -39,17 +31,6 @@ button {
   font-size: 18px;
   margin: 10px;
   cursor: pointer;
-}
-
-#answers {
-  width: 80%;
-}
-
-#answers button {
-  font-size: 24px;
-  margin: 12px 0;
-  padding: 20px;
-  width: 100%;
 }
 
 input {
