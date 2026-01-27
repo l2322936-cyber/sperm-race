@@ -7,38 +7,34 @@
 </head>
 <body>
 
+<!-- START SCREEN -->
 <div id="start" class="screen active">
   <h1>Sperm Race</h1>
   <input id="nameInput" placeholder="Enter your name" />
-  <button id="startBtn">Start</button>
-
-  <h2>Leaderboard</h2>
-  <ul id="board"></ul>
+  <button onclick="startGame()">Start</button>
 </div>
 
+<!-- QUESTIONS -->
 <div id="questions" class="screen">
   <h2 id="qText"></h2>
   <div id="answers"></div>
 </div>
 
+<!-- FLAPPY INFO -->
 <div id="flappyInfo" class="screen">
   <h1>Flappy Sperm</h1>
   <p>The longer you survive, the more time is removed.</p>
-  <p>Use the arrow keys to swim.</p>
-  <p><strong>Once you click the UP arrow, the game will begin.</strong></p>
+  <p><b>Press ↑ to begin</b></p>
 </div>
 
+<!-- END -->
 <div id="end" class="screen">
   <h1>Finished!</h1>
   <p id="finalTime"></p>
-  <h2>Leaderboard</h2>
-  <ul id="finalBoard"></ul>
   <button onclick="location.reload()">Restart</button>
 </div>
 
-<div id="canvasWrap">
-  <canvas id="game"></canvas>
-</div>
+<canvas id="game"></canvas>
 
 <script src="script.js"></script>
 </body>
