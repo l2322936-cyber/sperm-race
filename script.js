@@ -1,9 +1,6 @@
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 
-canvas.width = window.innerWidth;
-canvas.height = window.innerHeight;
-
 /* ================= GLOBAL ================= */
 let playerName = "";
 let time = 0;
@@ -41,21 +38,20 @@ document.getElementById("startBtn").onclick = () => {
   mazeLoop();
 };
 
-/* ================= MAZE ================= */
-// SOLVABLE BLUEPRINT MAZE
-const tile = 40;
+/* ================= MAZE (COMPLEX + SOLVABLE) ================= */
+const tile = 36;
 const maze = [
-"1111111111111111111",
-"1S00000000000100001",
-"1011111111111011101",
-"1000000000001000001",
-"1110111111101110101",
-"1000100000100000101",
-"1011101110101111101",
-"1010000010101000001",
-"1010111010101011111",
-"10000000100000000E1",
-"1111111111111111111"
+"111111111111111111111",
+"1S0000000000000010001",
+"1011111111111111010101",
+"1000000000000000010001",
+"1110111111111111011101",
+"1000100000000000010001",
+"1011101111111111010111",
+"1010001000000010010001",
+"1010111011111011011101",
+"10000000100000100000E1",
+"111111111111111111111"
 ];
 
 const rows = maze.length;
@@ -65,7 +61,6 @@ canvas.width = cols * tile;
 canvas.height = rows * tile;
 
 let startPos, endPos;
-
 for (let y = 0; y < rows; y++) {
   for (let x = 0; x < cols; x++) {
     if (maze[y][x] === "S") startPos = { x, y };
@@ -76,7 +71,7 @@ for (let y = 0; y < rows; y++) {
 const sperm = {
   x: startPos.x * tile + tile / 2,
   y: startPos.y * tile + tile / 2,
-  speed: 8
+  speed: 10
 };
 
 function drawMaze() {
@@ -101,7 +96,7 @@ function drawSperm(px = sperm.x, py = sperm.y) {
   ctx.lineWidth = 2;
   ctx.beginPath();
   ctx.moveTo(px - 14, py);
-  ctx.lineTo(px - 30, py + Math.sin(Date.now() / 100) * 6);
+  ctx.lineTo(px - 32, py + Math.sin(Date.now() / 90) * 6);
   ctx.stroke();
 }
 
@@ -132,6 +127,7 @@ function mazeLoop() {
     Math.floor(sperm.y / tile) === endPos.y
   ) {
     stage = "questions";
+    canvas.style.display = "none";
     document.getElementById("questions").classList.add("active");
     showQuestion();
     return;
@@ -173,7 +169,7 @@ function showQuestion() {
 }
 
 /* ================= FLAPPY SPERM ================= */
-let fy, fvy, pipes, started = false;
+let fy, fvy, pipes;
 
 function startFlappy() {
   document.getElementById("questions").classList.remove("active");
@@ -199,19 +195,28 @@ document.addEventListener("keydown", e => {
 function flappyLoop() {
   if (stage !== "flappy") return;
   ctx.clearRect(0, 0, canvas.width, canvas.height);
+
   fvy += 0.4;
   fy += fvy;
-  drawSperm(150, fy);
+  drawSperm(canvas.width / 3, fy);
 
   if (Math.random() < 0.02) {
-    pipes.push({ x: canvas.width, gap: 200 + Math.random() * 200 });
+    pipes.push({ x: canvas.width, gap: 220 + Math.random() * 160 });
   }
 
-  pipes.forEach(p => {
+  for (let p of pipes) {
     p.x -= 5;
     ctx.fillRect(p.x, 0, 40, p.gap - 120);
     ctx.fillRect(p.x, p.gap + 120, 40, canvas.height);
-  });
+
+    if (
+      p.x < canvas.width / 3 + 14 &&
+      p.x + 40 > canvas.width / 3 - 14 &&
+      (fy < p.gap - 120 || fy > p.gap + 120)
+    ) {
+      return endGame();
+    }
+  }
 
   if (fy < 0 || fy > canvas.height) return endGame();
   requestAnimationFrame(flappyLoop);
