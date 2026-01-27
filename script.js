@@ -266,76 +266,172 @@ function loadQuestion() {
   });
 }
 
-/* =====================
-   FLAPPY SPERM
-===================== */
-let fy, fvy, pipes, lastTime;
+/* =========================
+   FLAPPY SPERM GAME
+   ========================= */
 
-document.addEventListener("keydown", e => {
-  if (stage === "flappyInfo" && e.key === "ArrowUp") startFlappy();
-  if (stage === "flappy" && e.key === "ArrowUp") fvy = -7;
-});
+let flappyCanvas = document.getElementById("flappyCanvas");
+let fctx = flappyCanvas.getContext("2d");
+
+flappyCanvas.width = window.innerWidth;
+flappyCanvas.height = window.innerHeight;
+
+let gravity = 0.5;
+let lift = -10;
+let gameStarted = false;
+let gameOver = false;
+let frame = 0;
+
+// sperm object
+let sperm = {
+  x: flappyCanvas.width / 3,
+  y: flappyCanvas.height / 2,
+  radius: 12,
+  velocity: 0
+};
+
+// pipes
+let pipes = [];
 
 function startFlappy() {
-  document.getElementById("flappyInfo").classList.remove("active");
-  canvas.style.display = "block";
-  stage = "flappy";
-  fy = canvas.height / 2;
-  fvy = 0;
+  gameStarted = true;
+  gameOver = false;
   pipes = [];
-  lastTime = Date.now();
-  requestAnimationFrame(flappyLoop);
+  sperm.y = flappyCanvas.height / 2;
+  sperm.velocity = 0;
+  frame = 0;
+  flappyLoop();
 }
 
-function flappyLoop() {
-  if (stage !== "flappy") return;
-  ctx.clearRect(0,0,canvas.width,canvas.height);
+/* ===== DRAW SPERM ===== */
+function drawSperm() {
+  // HEAD
+  fctx.fillStyle = "white";
+  fctx.beginPath();
+  fctx.arc(sperm.x, sperm.y, sperm.radius, 0, Math.PI * 2);
+  fctx.fill();
 
-  fvy += 0.4;
-  fy += fvy;
+  // TAIL (wiggle animation)
+  fctx.strokeStyle = "white";
+  fctx.lineWidth = 2;
+  fctx.beginPath();
+  let tailLength = 35;
 
- drawFlappySperm();
-
-  if (Math.random() < 0.02) {
-    pipes.push({ x: canvas.width, gap: 200 + Math.random() * 200 });
+  for (let i = 0; i < tailLength; i += 5) {
+    let wiggle = Math.sin((frame + i) * 0.2) * 4;
+    fctx.lineTo(
+      sperm.x - i,
+      sperm.y + wiggle
+    );
   }
+  fctx.stroke();
+}
 
-  pipes.forEach(p => {
-    p.x -= 4;
-    ctx.fillRect(p.x,0,50,p.gap-120);
-    ctx.fillRect(p.x,p.gap+120,50,canvas.height);
-    if (p.x < 120 && p.x > 50 &&
-        (fy < p.gap-120 || fy > p.gap+120)) endGame();
+/* ===== PIPES ===== */
+function addPipe() {
+  let gap = 180;
+  let topHeight = Math.random() * (flappyCanvas.height - gap - 200) + 100;
+
+  pipes.push({
+    x: flappyCanvas.width,
+    top: topHeight,
+    bottom: flappyCanvas.height - topHeight - gap,
+    width: 70
+  });
+}
+
+function drawPipes() {
+  fctx.fillStyle = "#00ff88";
+
+  pipes.forEach(pipe => {
+    // top pipe
+    fctx.fillRect(pipe.x, 0, pipe.width, pipe.top);
+
+    // bottom pipe
+    fctx.fillRect(
+      pipe.x,
+      flappyCanvas.height - pipe.bottom,
+      pipe.width,
+      pipe.bottom
+    );
+  });
+}
+
+function updatePipes() {
+  pipes.forEach(pipe => pipe.x -= 4);
+
+  if (frame % 90 === 0) addPipe();
+
+  // collision detection
+  pipes.forEach(pipe => {
+    if (
+      sperm.x + sperm.radius > pipe.x &&
+      sperm.x - sperm.radius < pipe.x + pipe.width &&
+      (sperm.y - sperm.radius < pipe.top ||
+        sperm.y + sperm.radius >
+          flappyCanvas.height - pipe.bottom)
+    ) {
+      gameOver = true;
+    }
   });
 
-  if (fy < 0 || fy > canvas.height) endGame();
+  pipes = pipes.filter(pipe => pipe.x + pipe.width > 0);
+}
 
-  if (Date.now() - lastTime > 2000) {
-    time--;
-    lastTime = Date.now();
+/* ===== GAME LOOP ===== */
+function flappyLoop() {
+  if (gameOver) {
+    fctx.fillStyle = "white";
+    fctx.font = "40px Arial";
+    fctx.fillText(
+      "Game Over",
+      flappyCanvas.width / 2 - 100,
+      flappyCanvas.height / 2
+    );
+    return;
+  }
+
+  fctx.clearRect(0, 0, flappyCanvas.width, flappyCanvas.height);
+
+  if (!gameStarted) {
+    fctx.fillStyle = "white";
+    fctx.font = "32px Arial";
+    fctx.fillText(
+      "Once you click the UP arrow, the game will begin",
+      flappyCanvas.width / 2 - 300,
+      flappyCanvas.height / 2
+    );
+    requestAnimationFrame(flappyLoop);
+    return;
+  }
+
+  frame++;
+
+  sperm.velocity += gravity;
+  sperm.y += sperm.velocity;
+
+  drawSperm();
+  updatePipes();
+  drawPipes();
+
+  // floor / ceiling collision
+  if (
+    sperm.y + sperm.radius > flappyCanvas.height ||
+    sperm.y - sperm.radius < 0
+  ) {
+    gameOver = true;
   }
 
   requestAnimationFrame(flappyLoop);
 }
 
-function drawFlappySperm(x, y) {
-  // head
-  ctx.fillStyle = "#ffffff";
-  ctx.beginPath();
-  ctx.ellipse(x, y, 14, 10, 0, 0, Math.PI * 2);
-  ctx.fill();
-
-  // animated tail
-  ctx.strokeStyle = "#ffffff";
-  ctx.lineWidth = 2;
-  ctx.beginPath();
-  ctx.moveTo(x - 14, y);
-
-  const wiggle = Math.sin(Date.now() / 100) * 6;
-  ctx.lineTo(x - 35, y + wiggle);
-  ctx.stroke();
-}
-
+/* ===== CONTROLS ===== */
+window.addEventListener("keydown", e => {
+  if (e.key === "ArrowUp") {
+    if (!gameStarted) startFlappy();
+    sperm.velocity = lift;
+  }
+});
 /* =====================
    END
 ===================== */
