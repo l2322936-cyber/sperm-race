@@ -1,22 +1,19 @@
 html, body {
   margin: 0;
   padding: 0;
-  font-family: Arial, sans-serif;
-  background: #0a4cff;
+  background: #0a3cff;
   color: white;
+  font-family: Arial, sans-serif;
   overflow: hidden;
 }
 
 .screen {
   display: none;
-  width: 100vw;
-  height: 100vh;
+  position: absolute;
+  inset: 0;
+  background: #0a3cff;
   text-align: center;
-  padding-top: 10vh;
-}
-
-.screen.active {
-  display: block;
+  padding-top: 8vh;
 }
 
 h1 {
@@ -41,8 +38,14 @@ canvas {
   background: #d6f2ff;
 }
 
-#answers button {
+.answer {
   display: block;
+  width: 90%;
   margin: 20px auto;
-  width: 70%;
+  padding: 30px;
+  font-size: 2rem;
+  background: white;
+  color: black;
+  border: none;
+  cursor: pointer;
 }
