@@ -246,70 +246,118 @@ function showQuestion() {
   });
 }
 
-/* =========================
-   FLAPPY INTRO
-========================= */
-function startFlappyIntro(){
-  document.getElementById("questions").classList.remove("active");
-  document.getElementById("flappyIntro").classList.add("active");
-  stage="flappyIntro";
-}
+// ---------- FLAPPY ----------
+let flappyY, flappyVy;
+let flappyStarted = false;
+let pipes = [];
+let flappyTimer = 0;
 
-document.addEventListener("keydown",e=>{
-  if(stage==="flappyIntro" && e.key==="ArrowUp"){
-    document.getElementById("flappyIntro").classList.remove("active");
-    stage="flappy";
-    startFlappy();
-  }
-});
+function startFlappy() {
+  stage = "flappyIntro";
+  canvas.style.display = "block";
 
-/* =========================
-   FLAPPY SPERM
-========================= */
-let fy, fvy, pipes, lastTick;
+  flappyY = canvas.height / 2;
+  flappyVy = 0;
+  pipes = [];
+  flappyStarted = false;
+  flappyTimer = 0;
 
-function startFlappy(){
-  canvas.style.display="block";
-  fy=canvas.height/2;
-  fvy=0;
-  pipes=[];
-  lastTick=Date.now();
   flappyLoop();
 }
 
-function flappyLoop(){
-  if(stage!=="flappy") return;
-  ctx.clearRect(0,0,canvas.width,canvas.height);
-  ctx.fillStyle="#3fa9f5";
-  ctx.fillRect(0,0,canvas.width,canvas.height);
+document.addEventListener("keydown", e => {
+  if (e.key !== "ArrowUp") return;
 
-  fvy+=0.5;
-  fy+=fvy;
+  if (stage === "flappyIntro") {
+    stage = "flappyPlaying";
+    flappyStarted = true;
+    flappyVy = -9;
+  } 
+  else if (stage === "flappyPlaying") {
+    flappyVy = -9;
+  }
+});
 
-  drawSperm(150,fy);
+function flappyLoop() {
+  if (stage !== "flappyIntro" && stage !== "flappyPlaying") return;
 
-  if(Math.random()<0.02){
-    const gap=200;
-    const top=Math.random()*(canvas.height-gap);
-    pipes.push({x:canvas.width,top});
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  // background
+  ctx.fillStyle = "#3fa9f5";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  // instructions
+  if (stage === "flappyIntro") {
+    ctx.fillStyle = "white";
+    ctx.font = "48px Arial";
+    ctx.fillText("Flappy Sperm", canvas.width / 2 - 160, canvas.height / 2 - 80);
+    ctx.font = "26px Arial";
+    ctx.fillText(
+      "Press ↑ to start. Each 2 seconds = -1 time",
+      canvas.width / 2 - 300,
+      canvas.height / 2
+    );
   }
 
-  pipes.forEach(p=>{
-    p.x-=5;
-    ctx.fillStyle="#0a3cff";
-    ctx.fillRect(p.x,0,40,p.top);
-    ctx.fillRect(p.x,p.top+200,40,canvas.height);
-    if(150< p.x+40 && 150>p.x && (fy<p.top||fy>p.top+200)) endGame();
+  // physics
+  if (stage === "flappyPlaying") {
+    flappyVy += 0.5;
+    flappyY += flappyVy;
+
+    flappyTimer++;
+    if (flappyTimer % 120 === 0) time--; // every 2 seconds
+  }
+
+  // spawn pipes
+  if (stage === "flappyPlaying" && Math.random() < 0.02) {
+    const gap = 200;
+    const top = 100 + Math.random() * (canvas.height - gap - 200);
+    pipes.push({ x: canvas.width, top });
+  }
+
+  // draw pipes
+  ctx.fillStyle = "#0a3cff";
+  pipes.forEach(p => {
+    p.x -= 4;
+    ctx.fillRect(p.x, 0, 60, p.top);
+    ctx.fillRect(p.x, p.top + 200, 60, canvas.height);
   });
 
-  if(fy<0||fy>canvas.height) endGame();
+  // collision
+  pipes.forEach(p => {
+    if (
+      120 > p.x && 120 < p.x + 60 &&
+      (flappyY < p.top || flappyY > p.top + 200)
+    ) {
+      endGame();
+    }
+  });
 
-  if(Date.now()-lastTick>2000){
-    time--;
-    lastTick=Date.now();
-  }
+  if (flappyY < 0 || flappyY > canvas.height) endGame();
+
+  drawFlappySperm(120, flappyY);
 
   requestAnimationFrame(flappyLoop);
+}
+
+/* =====================
+   DRAW FLAPPY SPERM
+===================== */
+function drawFlappySperm(x, y) {
+  // head
+  ctx.fillStyle = "white";
+  ctx.beginPath();
+  ctx.ellipse(x, y, 14, 10, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // tail
+  ctx.strokeStyle = "white";
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(x - 14, y);
+  ctx.lineTo(x - 30, y + Math.sin(Date.now() / 100) * 6);
+  ctx.stroke();
 }
 
 /* =========================
