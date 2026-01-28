@@ -1,72 +1,116 @@
 * {
-  margin: 0;
-  padding: 0;
   box-sizing: border-box;
-  font-family: Arial, sans-serif;
+  font-family: Arial, Helvetica, sans-serif;
 }
 
 body {
-  background: #0b1020;
+  margin: 0;
+  background: #0a3d62;
   color: white;
   overflow: hidden;
 }
 
+/* Shared screen behavior */
+.screen {
+  display: none;
+  width: 100vw;
+  height: 100vh;
+}
+
+.screen.active {
+  display: flex;
+}
+
 /* START SCREEN */
 #startScreen {
-  position: fixed;
-  inset: 0;
-  background: linear-gradient(135deg, #0b1020, #162a6a);
-  display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 18px;
-  z-index: 10;
+  gap: 20px;
 }
 
-#startScreen h1 {
-  font-size: 64px;
+#gameTitle {
+  font-size: 4rem;
+  letter-spacing: 4px;
 }
 
-#startScreen h2 {
-  margin-top: 20px;
-}
-
-#nameInput {
-  width: 320px;
-  padding: 14px;
-  font-size: 20px;
-  border-radius: 8px;
-  border: none;
+#playerNameInput {
+  padding: 12px;
+  font-size: 1.2rem;
+  width: 260px;
   text-align: center;
+  border-radius: 6px;
+  border: none;
 }
 
 #startBtn {
   padding: 14px 40px;
-  font-size: 22px;
-  border-radius: 10px;
+  font-size: 1.3rem;
+  background: #1dd1a1;
+  color: #000;
   border: none;
+  border-radius: 8px;
   cursor: pointer;
-  background: #2aff6a;
-  color: black;
 }
 
 #startBtn:hover {
-  background: #1fe05a;
+  background: #10ac84;
 }
 
 #leaderboard {
-  list-style: none;
-  margin-top: 10px;
+  margin-top: 30px;
+}
+
+#leaderboard h2 {
+  margin-bottom: 10px;
+}
+
+/* MAZE */
+#mazeScreen {
+  align-items: center;
+  justify-content: center;
+}
+
+#mazeCanvas {
+  background: #000;
+}
+
+/* QUESTIONS */
+#questionScreen {
+  align-items: center;
+  justify-content: center;
+}
+
+#questionBox {
+  background: rgba(0,0,0,0.6);
+  padding: 40px;
+  border-radius: 12px;
+  max-width: 800px;
   text-align: center;
 }
 
-#leaderboard li {
-  opacity: 0.9;
+#answers button {
+  display: block;
+  margin: 15px auto;
+  padding: 14px;
+  width: 100%;
+  font-size: 1.1rem;
+  cursor: pointer;
 }
 
-/* CANVAS */
-canvas {
-  display: none;
+/* FLAPPY SPERM */
+#flappyScreen {
+  flex-direction: column;
+}
+
+#flappyUI {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 20px;
+}
+
+#flappyCanvas {
+  flex: 1;
   background: #000;
+  display: block;
 }
