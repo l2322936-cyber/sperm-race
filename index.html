@@ -1,30 +1,55 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Race to Life</title>
-  <link rel="stylesheet" href="style.css">
-  <script src="script.js" defer></script>
+  <meta charset="UTF-8" />
+  <title>Flappy Sperm: Survival Run</title>
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
 
-<div id="startScreen" class="screen active">
-  <h1>RACE TO LIFE</h1>
-  <input id="playerNameInput" placeholder="Enter name">
-  <button id="startBtn">START</button>
-</div>
+  <!-- START SCREEN -->
+  <div id="startScreen" class="screen active">
+    <h1>FLAPPY SPERM</h1>
+    <p>Survive the maze. Answer the questions. Beat evolution.</p>
 
-<div id="mazeScreen" class="screen">
+    <input id="playerName" placeholder="ENTER YOUR NAME" />
+    <button id="startBtn">START</button>
+
+    <h2>Leaderboard</h2>
+    <ul id="leaderboard"></ul>
+  </div>
+
+  <!-- MAZE -->
   <canvas id="mazeCanvas"></canvas>
-</div>
 
-<div id="questionScreen" class="screen">
-  <h2 id="questionText"></h2>
-  <div id="answers"></div>
-</div>
+  <!-- QUESTIONS -->
+  <div id="questionScreen" class="screen">
+    <h2 id="questionText"></h2>
+    <div id="answers"></div>
+  </div>
 
-<div id="flappyScreen" class="screen">
+  <!-- FLAPPY -->
+  <div id="flappyInfo" class="screen">
+    <h2>Flappy Sperm</h2>
+    <p>
+      Use the ↑ arrow to swim upward.<br>
+      Gravity pulls you down.<br>
+      Hit a wall = extinction.<br><br>
+      <b>Press ↑ to begin</b>
+    </p>
+  </div>
+
   <canvas id="flappyCanvas"></canvas>
-</div>
 
+  <!-- END -->
+  <div id="endScreen" class="screen">
+    <h1>Run Complete</h1>
+    <p id="finalTime"></p>
+    <h2>Leaderboard</h2>
+    <ul id="finalLeaderboard"></ul>
+    <button onclick="location.reload()">Restart</button>
+  </div>
+
+  <script src="script.js"></script>
 </body>
 </html>
