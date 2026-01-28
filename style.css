@@ -1,23 +1,48 @@
-body {
+html, body {
   margin: 0;
-  background: #0a3d62;
+  padding: 0;
+  font-family: Arial, sans-serif;
+  background: #0a4cff;
   color: white;
-  font-family: Arial;
+  overflow: hidden;
 }
 
 .screen {
   display: none;
   width: 100vw;
   height: 100vh;
+  text-align: center;
+  padding-top: 10vh;
 }
 
 .screen.active {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  flex-direction: column;
+  display: block;
+}
+
+h1 {
+  font-size: 4rem;
+}
+
+input {
+  font-size: 2rem;
+  padding: 15px;
+  width: 60%;
+  margin: 20px;
+}
+
+button {
+  font-size: 2rem;
+  padding: 15px 40px;
+  cursor: pointer;
 }
 
 canvas {
+  display: none;
+  background: #d6f2ff;
+}
+
+#answers button {
   display: block;
+  margin: 20px auto;
+  width: 70%;
 }
