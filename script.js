@@ -1,3 +1,47 @@
+/* =========================
+   START SCREEN + LEADERBOARD
+========================= */
+
+const startScreen = document.getElementById("startScreen");
+const startBtn = document.getElementById("startBtn");
+const nameInput = document.getElementById("nameInput");
+const leaderboardEl = document.getElementById("leaderboard");
+const canvas = document.getElementById("gameCanvas");
+
+let playerName = "Anonymous";
+
+/* ---------- LEADERBOARD ---------- */
+function loadBoard() {
+  return JSON.parse(localStorage.getItem("spermBoard") || "[]");
+}
+
+function saveScore(name, time) {
+  const board = loadBoard();
+  board.push({ name, time });
+  board.sort((a,b)=>a.time-b.time);
+  localStorage.setItem("spermBoard", JSON.stringify(board.slice(0,5)));
+}
+
+function renderBoard() {
+  leaderboardEl.innerHTML = "";
+  loadBoard().forEach(s => {
+    const li = document.createElement("li");
+    li.textContent = `${s.name} — ${s.time}s`;
+    leaderboardEl.appendChild(li);
+  });
+}
+
+renderBoard();
+
+/* ---------- START GAME ---------- */
+startBtn.onclick = () => {
+  playerName = nameInput.value.trim() || "Anonymous";
+  startScreen.style.display = "none";
+  canvas.style.display = "block";
+  stage = "maze";        // MUST match your maze code
+  mazeLoop();            // MUST already exist
+};
+
 /* ===============================
    SOLVABLE FULLSCREEN MAZE
    SMOOTH SPERM MOVEMENT
