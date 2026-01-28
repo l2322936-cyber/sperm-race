@@ -209,50 +209,118 @@ document.addEventListener("keydown", e => {
   if (e.key === "ArrowRight") move(player.speed, 0);
 });
 
-/* =========================
-   QUESTIONS
-========================= */
+/* =====================
+   QUESTIONS SYSTEM
+===================== */
+
 const questions = [
-  ["What is fertilization?",["Fusion of gametes","Cell division","Implantation"],0],
-  ["Male gamete?",["Sperm","Egg","Zygote"],0],
-  ["Female gamete?",["Egg","Sperm","Embryo"],0],
-  ["Where fertilization occurs?",["Fallopian tube","Uterus","Vagina"],0],
-  ["Chromosomes in humans?",["46","23","92"],0],
-  ["Meiosis creates?",["Gametes","Organs","Skin"],0],
-  ["Zygote is?",["Fertilized egg","Embryo","Gamete"],0],
-  ["What protects fetus?",["Amniotic sac","Placenta","Cervix"],0],
-  ["Where sperm produced?",["Testes","Ovaries","Uterus"],0],
-  ["What implants?",["Blastocyst","Gamete","Ovum"],0]
+  {
+    q: "Why does fertilization usually happen in the fallopian tube instead of the uterus?",
+    a: ["Chemical signals guide sperm there", "The egg never enters the uterus", "Sperm cannot survive in the uterus"],
+    c: 0
+  },
+  {
+    q: "What advantage does internal fertilization give mammals?",
+    a: ["More offspring at once", "Higher survival rate of embryos", "Faster reproduction"],
+    c: 1
+  },
+  {
+    q: "Why do humans produce millions of sperm for a single egg?",
+    a: ["Most sperm are defective or lost", "Eggs reject most sperm", "Sperm expire instantly"],
+    c: 0
+  },
+  {
+    q: "How does meiosis increase genetic diversity?",
+    a: ["Creates identical cells", "Mixes and reshuffles genes", "Removes mutations"],
+    c: 1
+  },
+  {
+    q: "Why is timing critical in fertilization?",
+    a: ["Eggs survive briefly after release", "Sperm live only minutes", "Hormones block fertilization"],
+    c: 0
+  },
+  {
+    q: "Why is the amniotic sac important?",
+    a: ["It feeds the fetus", "It cushions and protects the fetus", "It controls genetics"],
+    c: 1
+  },
+  {
+    q: "Why don’t all fertilized eggs implant successfully?",
+    a: ["Genetic abnormalities", "Lack of sperm", "Low oxygen"],
+    c: 0
+  },
+  {
+    q: "Why is sexual reproduction slower than asexual reproduction?",
+    a: ["Needs two parents and gametes", "Cells divide slower", "Embryos grow slower"],
+    c: 0
+  },
+  {
+    q: "Why does fertilization trigger rapid cell division?",
+    a: ["To form specialized tissues", "To avoid immune response", "To reduce mutations"],
+    c: 0
+  },
+  {
+    q: "What evolutionary benefit comes from genetic variation?",
+    a: ["More identical offspring", "Greater survival in changing environments", "Faster reproduction"],
+    c: 1
+  }
 ];
 
-let qi = 0;
+let qIndex = 0;
 
+/* START QUESTIONS */
+function startQuestions() {
+  stage = "questions";
+  canvas.style.display = "none";
+
+  const qBox = document.getElementById("questions");
+  qBox.classList.add("active");
+
+  qIndex = 0;
+  showQuestion();
+}
+
+/* SHOW QUESTION */
 function showQuestion() {
-  const q = questions[qi];
-  document.getElementById("qText").textContent = q[0];
-  const ans = document.getElementById("answers");
-  ans.innerHTML = "";
+  const qBox = document.getElementById("questions");
+  const qText = document.getElementById("qText");
+  const answers = document.getElementById("answers");
 
-  q[1].forEach((t,i)=>{
-    const b=document.createElement("button");
-    b.textContent=t;
-   b.onclick = () => {
-  time += i === q[2] ? -5 : 5;
-  qi++;
+  const current = questions[qIndex];
+  qText.textContent = current.q;
 
-  if (qi < questions.length) {
-    showQ();
-  } else {
-    endQuestions();
-  }
-};
-    ans.appendChild(b);
+  answers.innerHTML = "";
+
+  current.a.forEach((text, i) => {
+    const btn = document.createElement("button");
+    btn.textContent = text;
+
+    btn.onclick = () => {
+      if (i === current.c) {
+        time -= 5;
+      } else {
+        time += 5;
+      }
+
+      qIndex++;
+
+      if (qIndex < questions.length) {
+        showQuestion();
+      } else {
+        endQuestions();
+      }
+    };
+
+    answers.appendChild(btn);
   });
 }
+
+/* END QUESTIONS */
 function endQuestions() {
   document.getElementById("questions").classList.remove("active");
   startFlappyIntro();
 }
+
 // ---------- FLAPPY ----------
 let flappyY, flappyVy;
 let flappyStarted = false;
