@@ -49,20 +49,31 @@ document.getElementById("startBtn").onclick = () => {
   timer = setInterval(() => time++, 1000);
   initMaze();
 };
-
 /* =========================
-   MAZE SYSTEM (FIXED)
+   MAZE SYSTEM (FINAL FIX)
 ========================= */
 
-const tile = 40; // smaller tiles = more complexity
+const tile = 36;
 let maze = [];
 let rows, cols;
 let startCell, endCell;
 
+/* ---------- PLAYER (SPERM) ---------- */
+const player = {
+  x: 0,
+  y: 0,
+  r: 10,
+  speed: 12
+};
+
+/* ---------- INIT MAZE ---------- */
 function initMaze() {
-  // FORCE ODD DIMENSIONS (critical)
-  rows = Math.floor(canvas.height / tile);
-  cols = Math.floor(canvas.width / tile);
+  canvas.style.display = "block";
+
+  rows = Math.floor(window.innerHeight / tile);
+  cols = Math.floor(window.innerWidth / tile);
+
+  // FORCE ODD GRID (REQUIRED)
   if (rows % 2 === 0) rows--;
   if (cols % 2 === 0) cols--;
 
@@ -78,59 +89,51 @@ function initMaze() {
     for (let [dx, dy] of dirs) {
       const nx = x + dx;
       const ny = y + dy;
+
       if (
-        ny > 0 && ny < rows-1 &&
-        nx > 0 && nx < cols-1 &&
+        ny > 0 && ny < rows - 1 &&
+        nx > 0 && nx < cols - 1 &&
         maze[ny][nx] === 1
       ) {
         maze[ny][nx] = 0;
-        maze[y + dy/2][x + dx/2] = 0;
+        maze[y + dy / 2][x + dx / 2] = 0;
         carve(nx, ny);
       }
     }
   }
 
-  // START + CARVE
+  // START
   startCell = { x: 1, y: 1 };
   maze[startCell.y][startCell.x] = 0;
   carve(startCell.x, startCell.y);
 
-  // END (guaranteed reachable)
+  // END (CONNECTED BY DESIGN)
   endCell = { x: cols - 2, y: rows - 2 };
   maze[endCell.y][endCell.x] = 0;
 
-  player.x = startCell.x * tile + tile/2;
-  player.y = startCell.y * tile + tile/2;
+  // PLAYER POSITION
+  player.x = startCell.x * tile + tile / 2;
+  player.y = startCell.y * tile + tile / 2;
 
+  stage = "maze";
   mazeLoop();
 }
 
-/* =========================
-   PLAYER (FASTER SPERM)
-========================= */
-const player = {
-  x: 0,
-  y: 0,
-  r: 12,
-  speed: 24 // 🔥 2x faster (was 12)
-};
-
-/* =========================
-   DRAW MAZE
-========================= */
+/* ---------- DRAW MAZE ---------- */
 function drawMaze() {
-  ctx.fillStyle = "#3fa9f5";
-  ctx.fillRect(0,0,canvas.width,canvas.height);
+  ctx.fillStyle = "#4aa3df"; // corridors
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-  for (let y=0;y<rows;y++){
-    for (let x=0;x<cols;x++){
+  for (let y = 0; y < rows; y++) {
+    for (let x = 0; x < cols; x++) {
       if (maze[y][x] === 1) {
-        ctx.fillStyle = "#0a3cff";
-        ctx.fillRect(x*tile,y*tile,tile,tile);
+        ctx.fillStyle = "#0a3cff"; // walls
+        ctx.fillRect(x * tile, y * tile, tile, tile);
       }
     }
   }
 
+  // END TILE
   ctx.fillStyle = "#00ff99";
   ctx.fillRect(
     endCell.x * tile,
@@ -140,38 +143,55 @@ function drawMaze() {
   );
 }
 
-/* =========================
-   COLLISION (SOLID)
-========================= */
+/* ---------- COLLISION ---------- */
 function isWall(px, py) {
-  const c = Math.floor(px / tile);
-  const r = Math.floor(py / tile);
-  if (r < 0 || c < 0 || r >= rows || c >= cols) return true;
-  return maze[r][c] === 1;
+  const cx = Math.floor(px / tile);
+  const cy = Math.floor(py / tile);
+  if (cx < 0 || cy < 0 || cx >= cols || cy >= rows) return true;
+  return maze[cy][cx] === 1;
 }
 
-/* =========================
-   MOVEMENT (SMOOTH)
-========================= */
+/* ---------- MOVE ---------- */
 function move(dx, dy) {
   if (!isWall(player.x + dx, player.y)) player.x += dx;
   if (!isWall(player.x, player.y + dy)) player.y += dy;
 }
 
-/* =========================
-   MAZE LOOP
-========================= */
+/* ---------- DRAW SPERM ---------- */
+function drawSperm(x, y) {
+  // head
+  ctx.fillStyle = "#ffffff";
+  ctx.beginPath();
+  ctx.ellipse(x, y, 10, 7, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // animated tail
+  ctx.strokeStyle = "#ffffff";
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(x - 10, y);
+  ctx.lineTo(
+    x - 22,
+    y + Math.sin(Date.now() / 120) * 5
+  );
+  ctx.stroke();
+}
+
+/* ---------- MAZE LOOP ---------- */
 function mazeLoop() {
   if (stage !== "maze") return;
-  ctx.clearRect(0,0,canvas.width,canvas.height);
+
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
   drawMaze();
   drawSperm(player.x, player.y);
 
+  // WIN CHECK
   if (
     Math.floor(player.x / tile) === endCell.x &&
     Math.floor(player.y / tile) === endCell.y
   ) {
     stage = "questions";
+    canvas.style.display = "none";
     document.getElementById("questions").classList.add("active");
     showQuestion();
     return;
@@ -180,15 +200,13 @@ function mazeLoop() {
   requestAnimationFrame(mazeLoop);
 }
 
-/* =========================
-   CONTROLS
-========================= */
+/* ---------- CONTROLS ---------- */
 document.addEventListener("keydown", e => {
   if (stage !== "maze") return;
-  if (e.key === "ArrowUp") move(0,-player.speed);
-  if (e.key === "ArrowDown") move(0,player.speed);
-  if (e.key === "ArrowLeft") move(-player.speed,0);
-  if (e.key === "ArrowRight") move(player.speed,0);
+  if (e.key === "ArrowUp") move(0, -player.speed);
+  if (e.key === "ArrowDown") move(0, player.speed);
+  if (e.key === "ArrowLeft") move(-player.speed, 0);
+  if (e.key === "ArrowRight") move(player.speed, 0);
 });
 
 /* =========================
