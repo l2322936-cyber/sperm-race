@@ -236,16 +236,23 @@ function showQuestion() {
   q[1].forEach((t,i)=>{
     const b=document.createElement("button");
     b.textContent=t;
-    b.onclick=()=>{
-      time += i===q[2] ? -5 : 5;
-      qi++;
-      if (qi < questions.length) showQuestion();
-      else startFlappyIntro();
-    };
+   b.onclick = () => {
+  time += i === q[2] ? -5 : 5;
+  qi++;
+
+  if (qi < questions.length) {
+    showQ();
+  } else {
+    endQuestions();
+  }
+};
     ans.appendChild(b);
   });
 }
-
+function endQuestions() {
+  document.getElementById("questions").classList.remove("active");
+  startFlappyIntro();
+}
 // ---------- FLAPPY ----------
 let flappyY, flappyVy;
 let flappyStarted = false;
