@@ -1,301 +1,504 @@
-/* =========================
-   START SCREEN + LEADERBOARD
-========================= */
+// ===============================
+// START SCREEN ONLY
+// ===============================
 
+// ----- PAGE STYLE -----
+document.body.style.margin = "0";
+document.body.style.backgroundColor = "#0b4edb";
+document.body.style.fontFamily = "Arial, sans-serif";
+document.body.style.color = "white";
+document.body.style.textAlign = "center";
+
+// ----- ELEMENTS -----
 const startScreen = document.getElementById("startScreen");
+const title = document.getElementById("gameTitle");
+const nameInput = document.getElementById("playerName");
 const startBtn = document.getElementById("startBtn");
-const nameInput = document.getElementById("nameInput");
 const leaderboardEl = document.getElementById("leaderboard");
-const canvas = document.getElementById("gameCanvas");
 
-let playerName = "Anonymous";
+// ----- TITLE -----
+title.textContent = "SPERM RACE 🧬";
 
-/* ---------- LEADERBOARD ---------- */
-function loadBoard() {
-  return JSON.parse(localStorage.getItem("spermBoard") || "[]");
+// ----- INPUT STYLE -----
+nameInput.style.fontSize = "24px";
+nameInput.style.padding = "15px";
+nameInput.style.width = "300px";
+nameInput.style.margin = "20px auto";
+nameInput.style.display = "block";
+
+// ----- BUTTON STYLE -----
+startBtn.style.fontSize = "22px";
+startBtn.style.padding = "12px 40px";
+startBtn.style.cursor = "pointer";
+
+// ----- FAKE LEADERBOARD DATA -----
+const defaultScores = [
+  { name: "Alex", score: 42 },
+  { name: "Jordan", score: 38 },
+  { name: "Chris", score: 31 }
+];
+
+// Save if empty
+if (!localStorage.getItem("leaderboard")) {
+  localStorage.setItem("leaderboard", JSON.stringify(defaultScores));
 }
 
-function saveScore(name, time) {
-  const board = loadBoard();
-  board.push({ name, time });
-  board.sort((a,b)=>a.time-b.time);
-  localStorage.setItem("spermBoard", JSON.stringify(board.slice(0,5)));
-}
-
-function renderBoard() {
+// ----- LOAD LEADERBOARD -----
+function loadLeaderboard() {
   leaderboardEl.innerHTML = "";
-  loadBoard().forEach(s => {
+  const scores = JSON.parse(localStorage.getItem("leaderboard"));
+
+  scores.forEach((entry, index) => {
     const li = document.createElement("li");
-    li.textContent = `${s.name} — ${s.time}s`;
+    li.textContent = `${index + 1}. ${entry.name} — ${entry.score}s`;
+    li.style.fontSize = "20px";
+    li.style.margin = "10px 0";
     leaderboardEl.appendChild(li);
   });
 }
 
-renderBoard();
+loadLeaderboard();
 
-/* ---------- START GAME ---------- */
-startBtn.onclick = () => {
-  playerName = nameInput.value.trim() || "Anonymous";
-  startScreen.style.display = "none";
-  canvas.style.display = "block";
-  stage = "maze";        // MUST match your maze code
-  mazeLoop();            // MUST already exist
-};
-
-/* ===============================
-   SOLVABLE FULLSCREEN MAZE
-   SMOOTH SPERM MOVEMENT
-================================ */
-
-const canvas = document.getElementById("gameCanvas");
-const ctx = canvas.getContext("2d");
-
-canvas.width = window.innerWidth;
-canvas.height = window.innerHeight;
-
-let stage = "maze";
-
-/* ---------- MAZE SETTINGS ---------- */
-const COLS = 31;   // odd numbers = better mazes
-const ROWS = 21;
-const CELL = Math.floor(Math.min(
-  canvas.width / COLS,
-  canvas.height / ROWS
-));
-
-const offsetX = (canvas.width - COLS * CELL) / 2;
-const offsetY = (canvas.height - ROWS * CELL) / 2;
-
-/* ---------- MAZE GENERATION (DFS) ---------- */
-let maze = Array.from({ length: ROWS }, () =>
-  Array(COLS).fill(1)
-);
-
-function carve(x, y) {
-  const dirs = [
-    [2,0], [-2,0], [0,2], [0,-2]
-  ].sort(() => Math.random() - 0.5);
-
-  maze[y][x] = 0;
-
-  for (let [dx, dy] of dirs) {
-    let nx = x + dx;
-    let ny = y + dy;
-
-    if (
-      ny > 0 && ny < ROWS - 1 &&
-      nx > 0 && nx < COLS - 1 &&
-      maze[ny][nx] === 1
-    ) {
-      maze[y + dy/2][x + dx/2] = 0;
-      carve(nx, ny);
-    }
-  }
-}
-
-carve(1,1);
-maze[1][1] = 2;                       // START
-maze[ROWS-2][COLS-2] = 3;             // END
-
-/* ---------- SPERM (PIXEL MOVEMENT) ---------- */
-let sperm = {
-  x: offsetX + CELL + CELL/2,
-  y: offsetY + CELL + CELL/2,
-  r: CELL * 0.25,
-  speed: 6,
-  vx: 0,
-  vy: 0
-};
-
-const keys = {};
-
-/* ---------- INPUT ---------- */
-document.addEventListener("keydown", e => keys[e.key] = true);
-document.addEventListener("keyup", e => keys[e.key] = false);
-
-/* ---------- COLLISION ---------- */
-function wallAt(px, py) {
-  let cx = Math.floor((px - offsetX) / CELL);
-  let cy = Math.floor((py - offsetY) / CELL);
-  return maze[cy]?.[cx] === 1;
-}
-
-/* ---------- UPDATE ---------- */
-function update() {
-  sperm.vx = sperm.vy = 0;
-  if (keys.ArrowUp) sperm.vy = -sperm.speed;
-  if (keys.ArrowDown) sperm.vy = sperm.speed;
-  if (keys.ArrowLeft) sperm.vx = -sperm.speed;
-  if (keys.ArrowRight) sperm.vx = sperm.speed;
-
-  let nx = sperm.x + sperm.vx;
-  let ny = sperm.y + sperm.vy;
-
-  if (!wallAt(nx, sperm.y)) sperm.x = nx;
-  if (!wallAt(sperm.x, ny)) sperm.y = ny;
-
-  // END CHECK
-  let endX = offsetX + (COLS-2)*CELL;
-  let endY = offsetY + (ROWS-2)*CELL;
-  if (
-    Math.abs(sperm.x - (endX + CELL/2)) < CELL/2 &&
-    Math.abs(sperm.y - (endY + CELL/2)) < CELL/2
-  ) {
-    stage = "questions";
-    canvas.style.display = "none";
-    startQuestions(); // your existing function
+// ----- START BUTTON (NO GAME YET) -----
+startBtn.addEventListener("click", () => {
+  const name = nameInput.value.trim();
+  if (name === "") {
+    alert("Enter your name first");
     return;
   }
+
+  console.log("Player name saved:", name);
+  // NEXT STEP: switch to maze (we’ll add this later)
+});
+// ===============================
+// MAZE GAME
+// ===============================
+
+const canvas = document.getElementById("mazeCanvas");
+const ctx = canvas.getContext("2d");
+
+canvas.style.display = "none";
+
+const CELL_SIZE = 40;
+const SPEED = 12;
+
+let cols, rows;
+let maze = [];
+let player = { x: 0, y: 0, px: 0, py: 0 };
+let keys = {};
+
+// ---------- FULLSCREEN ----------
+function resizeCanvas() {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+}
+window.addEventListener("resize", resizeCanvas);
+
+// ---------- MAZE CELL ----------
+class Cell {
+  constructor(x, y) {
+    this.x = x;
+    this.y = y;
+    this.walls = { top: true, right: true, bottom: true, left: true };
+    this.visited = false;
+  }
+
+  draw() {
+    const x = this.x * CELL_SIZE;
+    const y = this.y * CELL_SIZE;
+    ctx.strokeStyle = "white";
+    ctx.lineWidth = 3;
+
+    if (this.walls.top) ctx.strokeRect(x, y, CELL_SIZE, 0);
+    if (this.walls.right) ctx.strokeRect(x + CELL_SIZE, y, 0, CELL_SIZE);
+    if (this.walls.bottom) ctx.strokeRect(x, y + CELL_SIZE, CELL_SIZE, 0);
+    if (this.walls.left) ctx.strokeRect(x, y, 0, CELL_SIZE);
+  }
 }
 
-/* ---------- DRAW ---------- */
-function drawMaze() {
-  ctx.clearRect(0,0,canvas.width,canvas.height);
+// ---------- MAZE GENERATION ----------
+function generateMaze() {
+  cols = Math.floor(canvas.width / CELL_SIZE);
+  rows = Math.floor(canvas.height / CELL_SIZE);
 
-  for (let y=0;y<ROWS;y++){
-    for (let x=0;x<COLS;x++){
-      if (maze[y][x] === 1) {
-        ctx.fillStyle = "#1f4fd8";
-        ctx.fillRect(
-          offsetX + x*CELL,
-          offsetY + y*CELL,
-          CELL, CELL
-        );
-      }
-      if (maze[y][x] === 3) {
-        ctx.fillStyle = "gold";
-        ctx.fillRect(
-          offsetX + x*CELL,
-          offsetY + y*CELL,
-          CELL, CELL
-        );
-      }
+  maze = [];
+  for (let y = 0; y < rows; y++) {
+    for (let x = 0; x < cols; x++) {
+      maze.push(new Cell(x, y));
+    }
+  }
+
+  let stack = [];
+  let current = maze[0];
+  current.visited = true;
+
+  while (true) {
+    let neighbors = getUnvisitedNeighbors(current);
+    if (neighbors.length > 0) {
+      let next = neighbors[Math.floor(Math.random() * neighbors.length)];
+      removeWalls(current, next);
+      stack.push(current);
+      current = next;
+      current.visited = true;
+    } else if (stack.length > 0) {
+      current = stack.pop();
+    } else {
+      break;
     }
   }
 }
 
-function drawSperm() {
+// ---------- HELPERS ----------
+function index(x, y) {
+  if (x < 0 || y < 0 || x >= cols || y >= rows) return -1;
+  return x + y * cols;
+}
+
+function getUnvisitedNeighbors(cell) {
+  const neighbors = [];
+  const top = maze[index(cell.x, cell.y - 1)];
+  const right = maze[index(cell.x + 1, cell.y)];
+  const bottom = maze[index(cell.x, cell.y + 1)];
+  const left = maze[index(cell.x - 1, cell.y)];
+
+  if (top && !top.visited) neighbors.push(top);
+  if (right && !right.visited) neighbors.push(right);
+  if (bottom && !bottom.visited) neighbors.push(bottom);
+  if (left && !left.visited) neighbors.push(left);
+
+  return neighbors;
+}
+
+function removeWalls(a, b) {
+  let dx = a.x - b.x;
+  let dy = a.y - b.y;
+
+  if (dx === 1) { a.walls.left = false; b.walls.right = false; }
+  if (dx === -1) { a.walls.right = false; b.walls.left = false; }
+  if (dy === 1) { a.walls.top = false; b.walls.bottom = false; }
+  if (dy === -1) { a.walls.bottom = false; b.walls.top = false; }
+}
+
+// ---------- PLAYER ----------
+function drawPlayer() {
+  ctx.beginPath();
+  ctx.arc(player.px, player.py, 10, 0, Math.PI * 2);
+  ctx.fillStyle = "cyan";
+  ctx.fill();
+}
+
+function movePlayer() {
+  let vx = 0, vy = 0;
+  if (keys.ArrowUp) vy = -SPEED;
+  if (keys.ArrowDown) vy = SPEED;
+  if (keys.ArrowLeft) vx = -SPEED;
+  if (keys.ArrowRight) vx = SPEED;
+
+  player.px += vx;
+  player.py += vy;
+}
+
+// ---------- DRAW ----------
+function drawMaze() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  maze.forEach(cell => cell.draw());
+
+  // START
+  ctx.fillStyle = "green";
+  ctx.fillRect(5, 5, CELL_SIZE - 10, CELL_SIZE - 10);
+
+  // END
+  ctx.fillStyle = "red";
+  ctx.fillRect(
+    (cols - 1) * CELL_SIZE + 5,
+    (rows - 1) * CELL_SIZE + 5,
+    CELL_SIZE - 10,
+    CELL_SIZE - 10
+  );
+
+  drawPlayer();
+}
+
+// ---------- LOOP ----------
+function mazeLoop() {
+  movePlayer();
+  drawMaze();
+  requestAnimationFrame(mazeLoop);
+}
+
+// ---------- START GAME ----------
+startBtn.addEventListener("click", () => {
+  startScreen.style.display = "none";
+  canvas.style.display = "block";
+
+  resizeCanvas();
+  generateMaze();
+
+  player.x = 0;
+  player.y = 0;
+  player.px = CELL_SIZE / 2;
+  player.py = CELL_SIZE / 2;
+
+  mazeLoop();
+// WIN CHECK
+if (
+  player.px > (cols - 1) * CELL_SIZE &&
+  player.py > (rows - 1) * CELL_SIZE
+) {
+  startQuestions();
+}
+});
+
+// ---------- INPUT ----------
+window.addEventListener("keydown", e => keys[e.key] = true);
+window.addEventListener("keyup", e => keys[e.key] = false);
+// ===============================
+// QUESTIONS SYSTEM
+// ===============================
+
+const questions = [
+  "What is the main purpose of reproduction?",
+  "What is fertilization?",
+  "What is the difference between sexual and asexual reproduction?",
+  "Why is genetic variation important?",
+  "How do plants reproduce without seeds?",
+  "What is pollination?",
+  "Why do organisms evolve over generations?",
+  "What role does DNA play in reproduction?",
+  "What environmental factors affect reproduction?",
+  "Why is reproduction essential for survival?"
+];
+
+let currentQuestion = 0;
+let showingQuestions = false;
+
+// ---------- QUESTION SCREEN ----------
+const questionScreen = document.createElement("div");
+questionScreen.style.position = "fixed";
+questionScreen.style.top = "0";
+questionScreen.style.left = "0";
+questionScreen.style.width = "100vw";
+questionScreen.style.height = "100vh";
+questionScreen.style.background = "#050b2c";
+questionScreen.style.color = "white";
+questionScreen.style.display = "none";
+questionScreen.style.justifyContent = "center";
+questionScreen.style.alignItems = "center";
+questionScreen.style.fontSize = "2.5rem";
+questionScreen.style.textAlign = "center";
+questionScreen.style.padding = "60px";
+questionScreen.style.boxSizing = "border-box";
+questionScreen.style.fontFamily = "Arial, sans-serif";
+
+document.body.appendChild(questionScreen);
+
+// ---------- SHOW QUESTION ----------
+function showQuestion() {
+  questionScreen.innerHTML = `
+    <div>
+      <div style="font-size:1.5rem; opacity:0.7;">Question ${currentQuestion + 1} / 10</div>
+      <br>
+      <div>${questions[currentQuestion]}</div>
+      <br><br>
+      <div style="font-size:1.2rem; opacity:0.6;">Press SPACE to continue</div>
+    </div>
+  `;
+}
+
+// ---------- START QUESTIONS ----------
+function startQuestions() {
+  showingQuestions = true;
+  canvas.style.display = "none";
+  questionScreen.style.display = "flex";
+  currentQuestion = 0;
+  showQuestion();
+}
+
+// ---------- SPACE TO ADVANCE ----------
+window.addEventListener("keydown", e => {
+  if (!showingQuestions) return;
+  if (e.code === "Space") {
+    currentQuestion++;
+    if (currentQuestion < questions.length) {
+      showQuestion();
+    } else {
+      endQuestions();
+    }
+  }
+});
+
+// ---------- END ----------
+function endQuestions() {
+  questionScreen.innerHTML = `
+    <div>
+      <h1>Finished.</h1>
+      <p>You survived.</p>
+    </div>
+  `;
+startFlappy();
+}
+// ===============================
+// FLAPPY SPERM
+// ===============================
+
+let flappyActive = false;
+let flappyStarted = false;
+let flappyTimeCounter = 0;
+
+let spermY, spermV;
+const gravity = 0.6;
+const lift = -10;
+
+let pipes = [];
+const pipeWidth = 80;
+let pipeGap = 220;
+let pipeSpeed = 4;
+
+// ---------- INSTRUCTION SCREEN ----------
+const flappyScreen = document.createElement("div");
+flappyScreen.style.position = "fixed";
+flappyScreen.style.inset = "0";
+flappyScreen.style.background = "#050b2c";
+flappyScreen.style.color = "white";
+flappyScreen.style.display = "none";
+flappyScreen.style.justifyContent = "center";
+flappyScreen.style.alignItems = "center";
+flappyScreen.style.textAlign = "center";
+flappyScreen.style.fontSize = "2.2rem";
+flappyScreen.style.padding = "60px";
+flappyScreen.style.boxSizing = "border-box";
+
+flappyScreen.innerHTML = `
+  <div>
+    <h1>Flappy Sperm</h1>
+    <p>The longer you survive, the more time is removed from your timer.</p>
+    <p>Use the ↑ arrow to swim.</p>
+    <p style="opacity:.7;margin-top:30px;">
+      Once you press ↑, the game will begin.
+    </p>
+  </div>
+`;
+
+document.body.appendChild(flappyScreen);
+
+// ---------- START FLAPPY ----------
+function startFlappy() {
+  flappyActive = true;
+  flappyStarted = false;
+  flappyTimeCounter = 0;
+
+  canvas.style.display = "block";
+  flappyScreen.style.display = "flex";
+
+  spermY = canvas.height / 2;
+  spermV = 0;
+  pipes = [];
+}
+
+// ---------- DRAW SPERM ----------
+function drawFlappySperm(x, y) {
   // head
   ctx.fillStyle = "white";
   ctx.beginPath();
-  ctx.arc(sperm.x, sperm.y, sperm.r, 0, Math.PI*2);
+  ctx.ellipse(x, y, 16, 10, 0, 0, Math.PI * 2);
   ctx.fill();
 
-  // animated tail
+  // tail (animated)
   ctx.strokeStyle = "white";
-  ctx.lineWidth = 2;
+  ctx.lineWidth = 3;
   ctx.beginPath();
-
-  let wiggle = Math.sin(Date.now()/100) * 10;
-  ctx.moveTo(sperm.x - sperm.r, sperm.y);
+  ctx.moveTo(x - 16, y);
   ctx.lineTo(
-    sperm.x - sperm.r - 30,
-    sperm.y + wiggle
+    x - 36,
+    y + Math.sin(Date.now() / 120) * 8
   );
   ctx.stroke();
 }
 
-/* ---------- LOOP ---------- */
-function loop() {
-  if (stage !== "maze") return;
-  update();
-  drawMaze();
-  drawSperm();
-  requestAnimationFrame(loop);
-}
+// ---------- FLAPPY LOOP ----------
+function flappyLoop() {
+  if (!flappyActive) return;
 
-canvas.style.display = "block";
-loop();
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-
-/* ---------- QUESTIONS ---------- */
-const questions = [
-  {q:"What is meiosis?", a:["Cell division for gametes","Mitosis","Fertilization"], c:0},
-  {q:"Humans have how many chromosomes?", a:["46","23","92"], c:0},
-  {q:"DNA shape?", a:["Helix","Square","Circle"], c:0},
-  {q:"Sperm is produced where?", a:["Testes","Ovary","Uterus"], c:0},
-  {q:"Egg cell is called?", a:["Ovum","Zygote","Embryo"], c:0},
-  {q:"Fertilization creates?", a:["Zygote","Embryo","Fetus"], c:0},
-  {q:"Mutation means?", a:["DNA change","Growth","Death"], c:0},
-  {q:"Which is haploid?", a:["Sperm","Skin cell","Liver cell"], c:0},
-  {q:"Crossing over occurs in?", a:["Meiosis","Mitosis","Fertilization"], c:0},
-  {q:"Gametes have?", a:["Half DNA","Double DNA","No DNA"], c:0}
-];
-
-function startQuestions(){
-  stage="questions";
-  questionScreen.classList.remove("hidden");
-  loadQuestion();
-}
-
-function loadQuestion(){
-  if(questionIndex>=questions.length){
-    questionScreen.classList.add("hidden");
-    startFlappyIntro();
+  // START WAIT
+  if (!flappyStarted) {
+    requestAnimationFrame(flappyLoop);
     return;
   }
 
-  const q = questions[questionIndex];
-  questionText.innerText = q.q;
-  answersDiv.innerHTML="";
+  // gravity
+  spermV += gravity;
+  spermY += spermV;
 
-  q.a.forEach((ans,i)=>{
-    const btn=document.createElement("button");
-    btn.innerText=ans;
-    btn.onclick=()=>{
-      timer += (i===q.c ? -5 : 5);
-      questionIndex++;
-      loadQuestion();
-    };
-    answersDiv.appendChild(btn);
+  // pipes
+  if (Math.random() < 0.02) {
+    const gapY = 200 + Math.random() * (canvas.height - 400);
+    pipes.push({ x: canvas.width, gapY });
+  }
+
+  pipes.forEach(p => {
+    p.x -= pipeSpeed;
+
+    // top pipe
+    ctx.fillStyle = "#2aff6a";
+    ctx.fillRect(p.x, 0, pipeWidth, p.gapY - pipeGap / 2);
+
+    // bottom pipe
+    ctx.fillRect(
+      p.x,
+      p.gapY + pipeGap / 2,
+      pipeWidth,
+      canvas.height
+    );
+
+    // collision
+    if (
+      150 + 16 > p.x &&
+      150 - 16 < p.x + pipeWidth &&
+      (spermY - 10 < p.gapY - pipeGap / 2 ||
+       spermY + 10 > p.gapY + pipeGap / 2)
+    ) {
+      endFlappy();
+    }
   });
-}
 
-/* ---------- FLAPPY ---------- */
-function startFlappyIntro(){
-  stage="flappyIntro";
-  flappyIntro.classList.remove("hidden");
+  // bounds
+  if (spermY < 0 || spermY > canvas.height) {
+    endFlappy();
+  }
 
-  document.addEventListener("keydown", startFlappyOnce, {once:true});
-}
+  drawFlappySperm(150, spermY);
 
-function startFlappyOnce(){
-  flappyIntro.classList.add("hidden");
-  canvas.style.display="block";
-  stage="flappy";
-  startFlappy();
-}
-
-let birdY = canvas.height/2;
-let velocity = 0;
-
-function startFlappy(){
-  setInterval(()=>{ timer--; },2000);
-  requestAnimationFrame(flappyLoop);
-}
-
-function flappyLoop(){
-  ctx.clearRect(0,0,canvas.width,canvas.height);
-
-  velocity += 0.5;
-  birdY += velocity;
-
-  ctx.fillStyle="white";
-  ctx.beginPath();
-  ctx.arc(200,birdY,15,0,Math.PI*2);
-  ctx.fill();
-
-  ctx.strokeStyle="white";
-  ctx.beginPath();
-  ctx.moveTo(185,birdY);
-  ctx.lineTo(150,birdY+Math.sin(Date.now()/100)*15);
-  ctx.stroke();
+  // TIME PENALTY
+  flappyTimeCounter++;
+  if (flappyTimeCounter % 120 === 0) {
+    time -= 1; // every ~2 seconds
+  }
 
   requestAnimationFrame(flappyLoop);
 }
 
-document.addEventListener("keydown",e=>{
-  if(stage==="flappy" && e.key==="ArrowUp"){
-    velocity=-8;
+// ---------- INPUT ----------
+window.addEventListener("keydown", e => {
+  if (!flappyActive) return;
+  if (e.key === "ArrowUp") {
+    if (!flappyStarted) {
+      flappyStarted = true;
+      flappyScreen.style.display = "none";
+    }
+    spermV = lift;
   }
 });
+
+// ---------- END ----------
+function endFlappy() {
+  flappyActive = false;
+  canvas.style.display = "none";
+  flappyScreen.style.display = "none";
+
+  // NEXT: leaderboard / restart
+  alert("Game over. Final time: " + time + "s");
+}
+
+
