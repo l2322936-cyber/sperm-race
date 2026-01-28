@@ -1,55 +1,44 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>Flappy Sperm: Survival Run</title>
-  <link rel="stylesheet" href="style.css" />
+  <meta charset="UTF-8">
+  <title>Sperm Race</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-  <!-- START SCREEN -->
-  <div id="startScreen" class="screen active">
-    <h1>FLAPPY SPERM</h1>
-    <p>Survive the maze. Answer the questions. Beat evolution.</p>
+<div id="startScreen" class="screen">
+  <h1>SPERM RACE</h1>
 
-    <input id="playerName" placeholder="ENTER YOUR NAME" />
-    <button id="startBtn">START</button>
+  <input id="nameInput" placeholder="Enter your name">
 
-    <h2>Leaderboard</h2>
-    <ul id="leaderboard"></ul>
-  </div>
+  <button id="startBtn">START</button>
 
-  <!-- MAZE -->
-  <canvas id="mazeCanvas"></canvas>
+  <h2>Leaderboard</h2>
+  <ul id="leaderboard"></ul>
+</div>
 
-  <!-- QUESTIONS -->
-  <div id="questionScreen" class="screen">
-    <h2 id="questionText"></h2>
-    <div id="answers"></div>
-  </div>
+<canvas id="mazeCanvas"></canvas>
 
-  <!-- FLAPPY -->
-  <div id="flappyInfo" class="screen">
-    <h2>Flappy Sperm</h2>
-    <p>
-      Use the ↑ arrow to swim upward.<br>
-      Gravity pulls you down.<br>
-      Hit a wall = extinction.<br><br>
-      <b>Press ↑ to begin</b>
-    </p>
-  </div>
+<div id="questionScreen" class="screen"></div>
 
-  <canvas id="flappyCanvas"></canvas>
+<div id="flappyIntro" class="screen">
+  <h1>Flappy Sperm</h1>
+  <p>The longer you survive, the more time is removed.</p>
+  <p>Hit a wall = game over.</p>
+  <p><b>Press ↑ to start</b></p>
+</div>
 
-  <!-- END -->
-  <div id="endScreen" class="screen">
-    <h1>Run Complete</h1>
-    <p id="finalTime"></p>
-    <h2>Leaderboard</h2>
-    <ul id="finalLeaderboard"></ul>
-    <button onclick="location.reload()">Restart</button>
-  </div>
+<canvas id="flappyCanvas"></canvas>
 
-  <script src="script.js"></script>
+<div id="endScreen" class="screen">
+  <h1>Finished!</h1>
+  <p id="finalTime"></p>
+  <h2>Leaderboard</h2>
+  <ul id="finalLeaderboard"></ul>
+  <button onclick="location.reload()">Restart</button>
+</div>
+
+<script src="script.js"></script>
 </body>
 </html>
