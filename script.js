@@ -1,444 +1,184 @@
-/* =========================
-   CANVAS + GLOBAL STATE
-========================= */
-const canvas = document.getElementById("game");
+const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
 
-canvas.width = window.innerWidth;
-canvas.height = window.innerHeight;
+canvas.width = innerWidth;
+canvas.height = innerHeight;
 
-let stage = "start";
-let time = 0;
-let timer;
+let timer = 60;
+let player = { x: 50, y: 50, r: 12, vx: 0, vy: 0 };
+let tailAngle = 0;
 
-function getBoard() {
-  return JSON.parse(localStorage.getItem("spermBoard") || "[]");
+const startScreen = document.getElementById("startScreen");
+const questionScreen = document.getElementById("questionScreen");
+const flappyIntro = document.getElementById("flappyIntro");
+const endScreen = document.getElementById("endScreen");
+
+document.getElementById("startBtn").onclick = startGame;
+
+// ---------- LEADERBOARD ----------
+function loadBoard() {
+  const board = JSON.parse(localStorage.getItem("board") || "[]");
+  document.getElementById("leaderboard").innerHTML =
+    board.map(b => `<li>${b.name}: ${b.time}s</li>`).join("");
 }
+loadBoard();
 
-function renderStartBoard() {
-  const list = document.getElementById("startBoard");
-  if (!list) return;
-
-  list.innerHTML = "";
-  getBoard().forEach(score => {
-    const li = document.createElement("li");
-    li.textContent = `${score.name} — ${score.time}s`;
-    list.appendChild(li);
-  });
-}
-window.onload = function () {
-  renderStartBoard();
-};
-
-
-
-/* =========================
-   START BUTTON
-========================= */
+// ---------- START ----------
 function startGame() {
-  stage = "maze";
-  document.getElementById("start").classList.remove("active");
+  startScreen.classList.add("hidden");
   canvas.style.display = "block";
-
-  time = 0;
-  timer = setInterval(() => time++, 1000);
-
-  initMaze();
-  mazeLoop();
+  startMaze();
 }
 
-/* =========================
-   MAZE DATA (SOLVABLE)
-========================= */
-/*
-  1 = wall
-  0 = path
-  S = start
-  E = end
-*/
+// ---------- MAZE ----------
+const walls = [
+  {x:0,y:0,w:canvas.width,h:20},
+  {x:0,y:canvas.height-20,w:canvas.width,h:20},
+  {x:0,y:0,w:20,h:canvas.height},
+  {x:canvas.width-20,y:0,w:20,h:canvas.height},
 
-const mazeMap = [
-  "1111111111111111111111111",
-  "1S00000000000000100000001",
-  "1011111111111111010111111",
-  "1000000000000000010000001",
-  "1111110111111111110111101",
-  "1000010000000000000100001",
-  "1011011111111111111101101",
-  "1010010000000000000001001",
-  "1011110111111111111101111",
-  "1000000100000000000100001",
-  "1111101110111111110111101",
-  "1000000000100000010000001",
-  "1011111111110111111111101",
-  "10000000000001000000000E1",
-  "1111111111111111111111111"
+  {x:100,y:100,w:600,h:20},
+  {x:100,y:100,w:20,h:500},
+  {x:200,y:200,w:800,h:20},
+  {x:900,y:200,w:20,h:500},
+  {x:300,y:400,w:700,h:20}
 ];
 
-const rows = mazeMap.length;
-const cols = mazeMap[0].length;
+const endZone = {x:canvas.width-80,y:canvas.height-80,w:40,h:40};
 
-/* =========================
-   TILE SCALING + CENTERING
-========================= */
-const tileSize = Math.floor(
-  Math.min(window.innerWidth / cols, window.innerHeight / rows)
-);
-
-const offsetX = Math.floor((canvas.width - cols * tileSize) / 2);
-const offsetY = Math.floor((canvas.height - rows * tileSize) / 2);
-
-/* =========================
-   FIND START + END
-========================= */
-let startPos = { x: 1, y: 1 };
-let endPos = { x: cols - 2, y: rows - 2 };
-
-for (let y = 0; y < rows; y++) {
-  for (let x = 0; x < cols; x++) {
-    if (mazeMap[y][x] === "S") startPos = { x, y };
-    if (mazeMap[y][x] === "E") endPos = { x, y };
-  }
-}
-
-/* =========================
-   PLAYER (SPERM)
-========================= */
-const sperm = {
-  x: 0,
-  y: 0,
-  speed: 12, // fast + smooth
-  radius: tileSize * 0.3
-};
-
-function initMaze() {
-  sperm.x = offsetX + startPos.x * tileSize + tileSize / 2;
-  sperm.y = offsetY + startPos.y * tileSize + tileSize / 2;
-}
-
-/* =========================
-   DRAW MAZE
-========================= */
 function drawMaze() {
-  for (let y = 0; y < rows; y++) {
-    for (let x = 0; x < cols; x++) {
-      let tile = mazeMap[y][x];
+  ctx.fillStyle = "#7ecbff";
+  ctx.fillRect(0,0,canvas.width,canvas.height);
 
-      if (tile === "1") ctx.fillStyle = "#1e90ff";
-      else if (tile === "S") ctx.fillStyle = "#00ff99";
-      else if (tile === "E") ctx.fillStyle = "#ffd700";
-      else ctx.fillStyle = "#001428";
+  ctx.fillStyle = "#1e4f7a";
+  walls.forEach(w=>ctx.fillRect(w.x,w.y,w.w,w.h));
 
-      ctx.fillRect(
-        offsetX + x * tileSize,
-        offsetY + y * tileSize,
-        tileSize,
-        tileSize
-      );
-    }
-  }
+  ctx.fillStyle = "red";
+  ctx.fillRect(endZone.x,endZone.y,endZone.w,endZone.h);
+
+  drawSperm();
 }
 
-/* =========================
-   COLLISION
-========================= */
-function isWall(px, py) {
-  const col = Math.floor((px - offsetX) / tileSize);
-  const row = Math.floor((py - offsetY) / tileSize);
-
-  if (row < 0 || col < 0 || row >= rows || col >= cols) return true;
-  return mazeMap[row][col] === "1";
-}
-
-/* =========================
-   MOVEMENT
-========================= */
-function move(dx, dy) {
-  const nx = sperm.x + dx;
-  const ny = sperm.y + dy;
-
-  if (!isWall(nx, sperm.y)) sperm.x = nx;
-  if (!isWall(sperm.x, ny)) sperm.y = ny;
-}
-
-/* =========================
-   DRAW SPERM (ANIMATED TAIL)
-========================= */
 function drawSperm() {
-  // head
-  ctx.fillStyle = "#ffffff";
+  ctx.fillStyle = "white";
   ctx.beginPath();
-  ctx.ellipse(sperm.x, sperm.y, sperm.radius, sperm.radius * 0.7, 0, 0, Math.PI * 2);
+  ctx.arc(player.x,player.y,player.r,0,Math.PI*2);
   ctx.fill();
 
-  // tail (animated)
-  ctx.strokeStyle = "#ffffff";
-  ctx.lineWidth = 2;
+  ctx.strokeStyle = "white";
+  ctx.lineWidth = 3;
   ctx.beginPath();
-  ctx.moveTo(sperm.x - sperm.radius, sperm.y);
-
-  const wiggle = Math.sin(Date.now() / 120) * 8;
-  ctx.lineTo(sperm.x - sperm.radius * 2.5, sperm.y + wiggle);
+  for(let i=0;i<20;i++){
+    ctx.lineTo(
+      player.x - i*6,
+      player.y + Math.sin(tailAngle + i*0.5)*6
+    );
+  }
   ctx.stroke();
+  tailAngle += 0.3;
 }
 
-/* =========================
-   MAZE WIN CHECK
-========================= */
-function checkMazeWin() {
-  const cx = Math.floor((sperm.x - offsetX) / tileSize);
-  const cy = Math.floor((sperm.y - offsetY) / tileSize);
+function startMaze() {
+  function loop() {
+    drawMaze();
+    player.x += player.vx;
+    player.y += player.vy;
 
-  if (cx === endPos.x && cy === endPos.y) {
-    clearInterval(timer);
-    stage = "questions"; // NEXT PHASE
-    canvas.style.display = "none";
-    document.getElementById("questions").classList.add("active");
-    if (typeof loadQuestion === "function") loadQuestion();
-  }
-}
+    walls.forEach(w=>{
+      if(
+        player.x > w.x-player.r &&
+        player.x < w.x+w.w+player.r &&
+        player.y > w.y-player.r &&
+        player.y < w.y+w.h+player.r
+      ){
+        player.x -= player.vx;
+        player.y -= player.vy;
+      }
+    });
 
-/* =========================
-   GAME LOOP
-========================= */
-function mazeLoop() {
-  if (stage !== "maze") return;
-
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  drawMaze();
-  drawSperm();
-  checkMazeWin();
-
-  requestAnimationFrame(mazeLoop);
-}
-
-/* =========================
-   CONTROLS
-========================= */
-document.addEventListener("keydown", e => {
-  if (stage !== "maze") return;
-
-  if (e.key === "ArrowUp") move(0, -sperm.speed);
-  if (e.key === "ArrowDown") move(0, sperm.speed);
-  if (e.key === "ArrowLeft") move(-sperm.speed, 0);
-  if (e.key === "ArrowRight") move(sperm.speed, 0);
-});
-/* =====================
-   QUESTIONS
-===================== */
-const questions = [
-  ["What is fertilization?", ["Fusion of gametes","Cell division","Implantation"],0],
-  ["Where is sperm made?",["Testes","Ovary","Uterus"],0],
-  ["How many chromosomes?",["46","23","92"],1],
-  ["Female gamete?",["Egg","Sperm","Zygote"],0],
-  ["Meiosis creates?",["Gametes","Organs","Skin"],0],
-  ["Zygote is?",["Fertilized egg","Embryo","Gamete"],0],
-  ["Where fertilization occurs?",["Fallopian tube","Uterus","Cervix"],0],
-  ["Male hormone?",["Testosterone","Estrogen","Insulin"],0],
-  ["What increases variation?",["Crossing over","Cloning","Mitosis"],0],
-  ["Sperm tail is called?",["Flagellum","Nucleus","Acrosome"],0]
-];
-
-let qi = 0;
-
-function loadQuestion() {
-  if (qi >= questions.length) {
-    document.getElementById("questions").classList.remove("active");
-    document.getElementById("flappyInfo").classList.add("active");
-    stage = "flappyInfo";
-    return;
-  }
-
-  const q = questions[qi];
-  document.getElementById("qText").textContent = q[0];
-  const a = document.getElementById("answers");
-  a.innerHTML = "";
-
-  q[1].forEach((t,i)=>{
-    const b = document.createElement("button");
-    b.textContent = t;
-    b.onclick = ()=>{
-      time += i === q[2] ? -5 : 5;
-      qi++;
-      loadQuestion();
-    };
-    a.appendChild(b);
-  });
-}
-
-/* =========================
-   FLAPPY SPERM GAME
-   ========================= */
-
-let flappyCanvas = document.getElementById("flappyCanvas");
-let fctx = flappyCanvas.getContext("2d");
-
-flappyCanvas.width = window.innerWidth;
-flappyCanvas.height = window.innerHeight;
-
-let gravity = 0.5;
-let lift = -10;
-let gameStarted = false;
-let gameOver = false;
-let frame = 0;
-
-// sperm object
-let sperm = {
-  x: flappyCanvas.width / 3,
-  y: flappyCanvas.height / 2,
-  radius: 12,
-  velocity: 0
-};
-
-// pipes
-let pipes = [];
-
-function startFlappy() {
-  gameStarted = true;
-  gameOver = false;
-  pipes = [];
-  sperm.y = flappyCanvas.height / 2;
-  sperm.velocity = 0;
-  frame = 0;
-  flappyLoop();
-}
-
-/* ===== DRAW SPERM ===== */
-function drawSperm() {
-  // HEAD
-  fctx.fillStyle = "white";
-  fctx.beginPath();
-  fctx.arc(sperm.x, sperm.y, sperm.radius, 0, Math.PI * 2);
-  fctx.fill();
-
-  // TAIL (wiggle animation)
-  fctx.strokeStyle = "white";
-  fctx.lineWidth = 2;
-  fctx.beginPath();
-  let tailLength = 35;
-
-  for (let i = 0; i < tailLength; i += 5) {
-    let wiggle = Math.sin((frame + i) * 0.2) * 4;
-    fctx.lineTo(
-      sperm.x - i,
-      sperm.y + wiggle
-    );
-  }
-  fctx.stroke();
-}
-
-/* ===== PIPES ===== */
-function addPipe() {
-  let gap = 180;
-  let topHeight = Math.random() * (flappyCanvas.height - gap - 200) + 100;
-
-  pipes.push({
-    x: flappyCanvas.width,
-    top: topHeight,
-    bottom: flappyCanvas.height - topHeight - gap,
-    width: 70
-  });
-}
-
-function drawPipes() {
-  fctx.fillStyle = "#00ff88";
-
-  pipes.forEach(pipe => {
-    // top pipe
-    fctx.fillRect(pipe.x, 0, pipe.width, pipe.top);
-
-    // bottom pipe
-    fctx.fillRect(
-      pipe.x,
-      flappyCanvas.height - pipe.bottom,
-      pipe.width,
-      pipe.bottom
-    );
-  });
-}
-
-function updatePipes() {
-  pipes.forEach(pipe => pipe.x -= 4);
-
-  if (frame % 90 === 0) addPipe();
-
-  // collision detection
-  pipes.forEach(pipe => {
-    if (
-      sperm.x + sperm.radius > pipe.x &&
-      sperm.x - sperm.radius < pipe.x + pipe.width &&
-      (sperm.y - sperm.radius < pipe.top ||
-        sperm.y + sperm.radius >
-          flappyCanvas.height - pipe.bottom)
-    ) {
-      gameOver = true;
+    if(
+      player.x > endZone.x &&
+      player.y > endZone.y
+    ){
+      canvas.style.display="none";
+      startQuestions();
+      return;
     }
-  });
-
-  pipes = pipes.filter(pipe => pipe.x + pipe.width > 0);
+    requestAnimationFrame(loop);
+  }
+  loop();
 }
 
-/* ===== GAME LOOP ===== */
-function flappyLoop() {
-  if (gameOver) {
-    fctx.fillStyle = "white";
-    fctx.font = "40px Arial";
-    fctx.fillText(
-      "Game Over",
-      flappyCanvas.width / 2 - 100,
-      flappyCanvas.height / 2
-    );
-    return;
+window.addEventListener("keydown",e=>{
+  if(e.key==="ArrowUp")player.vy=-4;
+  if(e.key==="ArrowDown")player.vy=4;
+  if(e.key==="ArrowLeft")player.vx=-4;
+  if(e.key==="ArrowRight")player.vx=4;
+});
+window.addEventListener("keyup",()=>player.vx=player.vy=0);
+
+// ---------- QUESTIONS ----------
+const questions=[
+ {q:"What is meiosis?",a:["Cell division","Growth","Digestion","Photosynthesis"],c:0},
+ {q:"Humans have how many chromosomes?",a:["46","23","44","48"],c:0}
+];
+let qi=0;
+
+function startQuestions(){
+  questionScreen.classList.remove("hidden");
+  showQuestion();
+}
+
+function showQuestion(){
+  if(qi>=questions.length){ startFlappyIntro(); return; }
+  const q=questions[qi];
+  document.getElementById("questionText").innerText=q.q;
+  const aDiv=document.getElementById("answers");
+  aDiv.innerHTML="";
+  q.a.forEach((txt,i)=>{
+    const b=document.createElement("button");
+    b.className="answerBtn";
+    b.innerText=txt;
+    b.onclick=()=>{ timer+= i===q.c?-5:5; qi++; showQuestion(); };
+    aDiv.appendChild(b);
+  });
+}
+
+// ---------- FLAPPY ----------
+let flappy=false;
+let bird={x:200,y:300,vy:0};
+
+function startFlappyIntro(){
+  questionScreen.classList.add("hidden");
+  flappyIntro.classList.remove("hidden");
+}
+
+window.addEventListener("keydown",e=>{
+  if(e.key==="ArrowUp" && !flappy){
+    flappy=true;
+    flappyIntro.classList.add("hidden");
+    canvas.style.display="block";
+    flappyLoop();
   }
+  if(e.key==="ArrowUp") bird.vy=-6;
+});
 
-  fctx.clearRect(0, 0, flappyCanvas.width, flappyCanvas.height);
-
-  if (!gameStarted) {
-    fctx.fillStyle = "white";
-    fctx.font = "32px Arial";
-    fctx.fillText(
-      "Once you click the UP arrow, the game will begin",
-      flappyCanvas.width / 2 - 300,
-      flappyCanvas.height / 2
-    );
-    requestAnimationFrame(flappyLoop);
-    return;
-  }
-
-  frame++;
-
-  sperm.velocity += gravity;
-  sperm.y += sperm.velocity;
+function flappyLoop(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  bird.vy+=0.5;
+  bird.y+=bird.vy;
 
   drawSperm();
-  updatePipes();
-  drawPipes();
 
-  // floor / ceiling collision
-  if (
-    sperm.y + sperm.radius > flappyCanvas.height ||
-    sperm.y - sperm.radius < 0
-  ) {
-    gameOver = true;
+  if(bird.y>canvas.height||bird.y<0){
+    endGame();
+    return;
   }
-
   requestAnimationFrame(flappyLoop);
 }
 
-/* ===== CONTROLS ===== */
-window.addEventListener("keydown", e => {
-  if (e.key === "ArrowUp") {
-    if (!gameStarted) startFlappy();
-    sperm.velocity = lift;
-  }
-});
-/* =====================
-   END
-===================== */
-function endGame() {
-  clearInterval(timer);
-  stage = "end";
-  canvas.style.display = "none";
-  document.getElementById("end").classList.add("active");
-  document.getElementById("finalTime").textContent = `Final Time: ${time}s`;
+// ---------- END ----------
+function endGame(){
+  canvas.style.display="none";
+  endScreen.classList.remove("hidden");
 }
