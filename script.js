@@ -1,184 +1,184 @@
-/***********************
- GLOBAL GAME STATE
-************************/
-let currentScreen = "start";
-let playerName = "";
-let gameData = {
-  mazeCompleted: false,
-  questionsCompleted: false,
-  flappyCompleted: false
+/* ---------------- GLOBAL ---------------- */
+let state = "start";
+let player = { name: "", time: 120 };
+let leaderboard = JSON.parse(localStorage.getItem("leaders") || "[]");
+
+/* ---------------- START ---------------- */
+const startBtn = document.getElementById("startBtn");
+startBtn.onclick = () => {
+  player.name = document.getElementById("playerName").value || "Player";
+  document.getElementById("startScreen").classList.remove("active");
+  startMaze();
 };
 
-/***********************
- SCREEN HELPERS
-************************/
-function showScreen(id) {
-  document.querySelectorAll(".screen").forEach(s => {
-    s.classList.remove("active");
-  });
-  document.getElementById(id).classList.add("active");
-  currentScreen = id;
+function renderLeaderboard() {
+  const list = document.getElementById("leaderboard");
+  list.innerHTML = leaderboard.map(l => `<li>${l.name}: ${l.time}s</li>`).join("");
 }
+renderLeaderboard();
 
-/***********************
- SECTION 1: START SCREEN
-************************/
-const startBtn = document.getElementById("startBtn");
-const nameInput = document.getElementById("playerNameInput");
-
-startBtn.addEventListener("click", () => {
-  const name = nameInput.value.trim();
-  if (name === "") {
-    alert("Enter a name");
-    return;
-  }
-
-  playerName = name;
-  showScreen("mazeScreen");
-  startMaze(); // 🔑 CONNECTS TO NEXT SECTION
-});
-
-/***********************
- SECTION 2: MAZE (CONNECTED)
-************************/
+/* ---------------- MAZE ---------------- */
 const mazeCanvas = document.getElementById("mazeCanvas");
-const mazeCtx = mazeCanvas.getContext("2d");
+const mCtx = mazeCanvas.getContext("2d");
+mazeCanvas.width = innerWidth;
+mazeCanvas.height = innerHeight;
 
-function resizeMaze() {
-  mazeCanvas.width = window.innerWidth;
-  mazeCanvas.height = window.innerHeight;
+let sperm = { x: 40, y: mazeCanvas.height / 2, vx: 0, vy: 0 };
+const speed = 12;
+
+// SIMPLE SOLVABLE MAZE
+const walls = [];
+for (let i = 0; i < 20; i++) {
+  walls.push({ x: 200 + i * 80, y: (i % 2) * 300 + 100, w: 40, h: 400 });
 }
-window.addEventListener("resize", resizeMaze);
 
-let player = { x: 60, y: 60, r: 10, speed: 12 };
-let goal = { x: 0, y: 0, r: 20 };
+function drawSperm(ctx, x, y) {
+  ctx.fillStyle = "white";
+  ctx.beginPath();
+  ctx.arc(x, y, 10, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.strokeStyle = "white";
+  ctx.beginPath();
+  ctx.moveTo(x - 10, y);
+  ctx.lineTo(x - 25, y + Math.sin(Date.now() / 100) * 10);
+  ctx.stroke();
+}
 
 function startMaze() {
-  resizeMaze();
-  goal.x = mazeCanvas.width - 80;
-  goal.y = mazeCanvas.height - 80;
-  requestAnimationFrame(updateMaze);
+  state = "maze";
+  mazeCanvas.style.display = "block";
+  requestAnimationFrame(mazeLoop);
 }
 
-function updateMaze() {
-  if (currentScreen !== "mazeScreen") return;
+function mazeLoop() {
+  if (state !== "maze") return;
+  mCtx.clearRect(0, 0, mazeCanvas.width, mazeCanvas.height);
 
-  mazeCtx.clearRect(0, 0, mazeCanvas.width, mazeCanvas.height);
+  walls.forEach(w => {
+    mCtx.fillStyle = "#2aa9ff";
+    mCtx.fillRect(w.x, w.y, w.w, w.h);
+  });
 
-  // player
-  mazeCtx.fillStyle = "white";
-  mazeCtx.beginPath();
-  mazeCtx.arc(player.x, player.y, player.r, 0, Math.PI * 2);
-  mazeCtx.fill();
+  drawSperm(mCtx, sperm.x, sperm.y);
 
-  // goal
-  mazeCtx.fillStyle = "green";
-  mazeCtx.beginPath();
-  mazeCtx.arc(goal.x, goal.y, goal.r, 0, Math.PI * 2);
-  mazeCtx.fill();
+  sperm.x += sperm.vx;
+  sperm.y += sperm.vy;
 
-  // win check
-  const dx = player.x - goal.x;
-  const dy = player.y - goal.y;
-  if (Math.hypot(dx, dy) < player.r + goal.r) {
-    gameData.mazeCompleted = true;
-    showScreen("questionScreen");
-    startQuestions(); // 🔑 CONNECTS
+  if (sperm.x > mazeCanvas.width - 30) {
+    mazeCanvas.style.display = "none";
+    startQuestions();
     return;
   }
 
-  requestAnimationFrame(updateMaze);
+  requestAnimationFrame(mazeLoop);
 }
 
-// movement
 document.addEventListener("keydown", e => {
-  if (currentScreen !== "mazeScreen") return;
-
-  if (e.key === "ArrowUp") player.y -= player.speed;
-  if (e.key === "ArrowDown") player.y += player.speed;
-  if (e.key === "ArrowLeft") player.x -= player.speed;
-  if (e.key === "ArrowRight") player.x += player.speed;
+  if (state === "maze") {
+    if (e.key === "ArrowUp") sperm.vy = -speed;
+    if (e.key === "ArrowDown") sperm.vy = speed;
+    if (e.key === "ArrowRight") sperm.vx = speed;
+    if (e.key === "ArrowLeft") sperm.vx = -speed;
+  }
 });
 
-/***********************
- SECTION 3: QUESTIONS
-************************/
-const questionText = document.getElementById("questionText");
-const answersDiv = document.getElementById("answers");
+document.addEventListener("keyup", () => {
+  sperm.vx = sperm.vy = 0;
+});
 
-let qIndex = 0;
+/* ---------------- QUESTIONS ---------------- */
 const questions = [
-  { q: "What is fertilization?", a: ["Cell division", "Fusion of gametes", "Mitosis"], c: 1 },
-  { q: "What does sperm provide?", a: ["Energy", "DNA", "Nutrients"], c: 1 }
+  {
+    q: "What mattered more in the maze: planning or reaction?",
+    a: ["Planning", "Reaction"],
+    c: 0
+  },
+  {
+    q: "Did difficulty improve realism?",
+    a: ["Yes", "No"],
+    c: 0
+  }
 ];
 
+let qIndex = 0;
+
 function startQuestions() {
-  qIndex = 0;
-  loadQuestion();
+  state = "questions";
+  document.getElementById("questionScreen").classList.add("active");
+  showQuestion();
 }
 
-function loadQuestion() {
-  if (qIndex >= questions.length) {
-    gameData.questionsCompleted = true;
-    showScreen("flappyScreen");
-    startFlappy(); // 🔑 CONNECTS
-    return;
-  }
-
+function showQuestion() {
   const q = questions[qIndex];
-  questionText.textContent = q.q;
-  answersDiv.innerHTML = "";
-
-  q.a.forEach((text, i) => {
-    const btn = document.createElement("button");
-    btn.textContent = text;
-    btn.onclick = () => {
-      if (i === q.c) qIndex++;
-      loadQuestion();
+  document.getElementById("questionText").innerText = q.q;
+  const aDiv = document.getElementById("answers");
+  aDiv.innerHTML = "";
+  q.a.forEach((ans, i) => {
+    const b = document.createElement("button");
+    b.innerText = ans;
+    b.onclick = () => {
+      player.time += i === q.c ? -5 : 5;
+      qIndex++;
+      qIndex < questions.length ? showQuestion() : startFlappyInfo();
     };
-    answersDiv.appendChild(btn);
+    aDiv.appendChild(b);
   });
 }
 
-/***********************
- SECTION 4: FLAPPY SPERM
-************************/
+/* ---------------- FLAPPY ---------------- */
 const flappyCanvas = document.getElementById("flappyCanvas");
-const flappyCtx = flappyCanvas.getContext("2d");
+const fCtx = flappyCanvas.getContext("2d");
+flappyCanvas.width = innerWidth;
+flappyCanvas.height = innerHeight;
 
-let sperm = { x: 100, y: 200, vy: 0 };
-let gravity = 0.6;
+let fy = flappyCanvas.height / 2;
+let vel = 0;
+let started = false;
 
-function startFlappy() {
-  flappyCanvas.width = window.innerWidth;
-  flappyCanvas.height = window.innerHeight;
-  requestAnimationFrame(updateFlappy);
-}
-
-function updateFlappy() {
-  if (currentScreen !== "flappyScreen") return;
-
-  flappyCtx.clearRect(0, 0, flappyCanvas.width, flappyCanvas.height);
-
-  sperm.vy += gravity;
-  sperm.y += sperm.vy;
-
-  flappyCtx.fillStyle = "white";
-  flappyCtx.beginPath();
-  flappyCtx.arc(sperm.x, sperm.y, 12, 0, Math.PI * 2);
-  flappyCtx.fill();
-
-  if (sperm.y < 0 || sperm.y > flappyCanvas.height) {
-    alert("Game Over");
-    location.reload();
-    return;
-  }
-
-  requestAnimationFrame(updateFlappy);
+function startFlappyInfo() {
+  document.getElementById("questionScreen").classList.remove("active");
+  document.getElementById("flappyInfo").classList.add("active");
+  state = "flappyInfo";
 }
 
 document.addEventListener("keydown", e => {
-  if (currentScreen === "flappyScreen" && e.code === "Space") {
-    sperm.vy = -8;
+  if (state === "flappyInfo" && e.key === "ArrowUp") {
+    document.getElementById("flappyInfo").classList.remove("active");
+    flappyCanvas.style.display = "block";
+    state = "flappy";
+    started = true;
+    requestAnimationFrame(flappyLoop);
   }
+  if (state === "flappy") vel = -8;
 });
+
+function flappyLoop() {
+  if (state !== "flappy") return;
+  fCtx.clearRect(0, 0, flappyCanvas.width, flappyCanvas.height);
+
+  vel += 0.5;
+  fy += vel;
+
+  drawSperm(fCtx, 100, fy);
+
+  if (fy < 0 || fy > flappyCanvas.height) endGame();
+
+  requestAnimationFrame(flappyLoop);
+}
+
+/* ---------------- END ---------------- */
+function endGame() {
+  state = "end";
+  flappyCanvas.style.display = "none";
+  leaderboard.push({ name: player.name, time: player.time });
+  leaderboard.sort((a, b) => b.time - a.time);
+  leaderboard = leaderboard.slice(0, 5);
+  localStorage.setItem("leaders", JSON.stringify(leaderboard));
+
+  document.getElementById("finalTime").innerText = `Time: ${player.time}s`;
+  document.getElementById("endScreen").classList.add("active");
+
+  document.getElementById("finalLeaderboard").innerHTML =
+    leaderboard.map(l => `<li>${l.name}: ${l.time}s</li>`).join("");
+}
