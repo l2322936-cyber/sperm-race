@@ -7,37 +7,19 @@
 </head>
 <body>
 
-<div id="startScreen" class="screen">
-  <h1>Sperm Race 🧬</h1>
-  <input id="playerName" placeholder="ENTER YOUR NAME">
-  <button id="startBtn">START</button>
-  <h2>Leaderboard</h2>
-  <ul id="leaderboard"></ul>
-</div>
+  <div id="startScreen">
+    <h1>Sperm Race</h1>
 
-<canvas id="gameCanvas"></canvas>
+    <input id="playerName" placeholder="Enter your name">
 
-<div id="questionScreen" class="screen hidden">
-  <h2 id="questionText"></h2>
-  <div id="answers"></div>
-</div>
+    <button id="startBtn">START</button>
 
-<div id="flappyIntro" class="screen hidden">
-  <h1>Flappy Sperm</h1>
-  <p>
-    Use the ↑ arrow to fly.<br>
-    The longer you survive, the more time you lose.<br><br>
-    <strong>Once you click the UP arrow, the game will begin.</strong>
-  </p>
-</div>
+    <h2>Leaderboard</h2>
+    <ul id="leaderboard"></ul>
+  </div>
 
-<div id="endScreen" class="screen hidden">
-  <h1>Finished!</h1>
-  <h2>Leaderboard</h2>
-  <ul id="finalBoard"></ul>
-  <button onclick="location.reload()">Restart</button>
-</div>
+  <canvas id="gameCanvas"></canvas>
 
-<script src="script.js"></script>
+  <script src="script.js" defer></script>
 </body>
 </html>
