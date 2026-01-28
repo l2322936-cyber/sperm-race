@@ -6,21 +6,36 @@ body {
   text-align: center;
 }
 
+.hidden {
+  display: none;
+}
+
 #startScreen {
   padding-top: 80px;
 }
 
 input {
-  font-size: 22px;
-  padding: 10px;
-  width: 300px;
+  font-size: 24px;
+  padding: 15px;
+  width: 400px;
   margin: 20px;
 }
 
 button {
-  font-size: 24px;
-  padding: 12px 40px;
+  font-size: 26px;
+  padding: 15px 50px;
   cursor: pointer;
+}
+
+#questionScreen {
+  padding-top: 80px;
+}
+
+#answers button {
+  display: block;
+  width: 80%;
+  margin: 20px auto;
+  font-size: 22px;
 }
 
 canvas {
