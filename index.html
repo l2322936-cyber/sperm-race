@@ -7,31 +7,21 @@
 </head>
 <body>
 
-<div id="startScreen">
-  <h1>Sperm Race</h1>
-  <input id="playerName" placeholder="Enter your name">
-  <button id="startBtn">START</button>
+  <!-- START SCREEN -->
+  <div id="startScreen">
+    <h1>Sperm Race 🧬</h1>
 
-  <h2>Leaderboard</h2>
-  <ul id="leaderboard"></ul>
-</div>
+    <input id="nameInput" type="text" placeholder="Enter your name">
 
-<div id="questionScreen" class="hidden">
-  <h2 id="questionText"></h2>
-  <div id="answers"></div>
-</div>
+    <button id="startBtn">START</button>
 
-<div id="flappyIntro" class="hidden">
-  <h1>Flappy Sperm</h1>
-  <p>
-    Once you click the UP arrow, the game will begin.<br>
-    Every 2 seconds = −1 second from your timer.<br>
-    Hit a pipe = lose.
-  </p>
-</div>
+    <h2>Leaderboard</h2>
+    <ul id="leaderboard"></ul>
+  </div>
 
-<canvas id="gameCanvas"></canvas>
+  <!-- GAME CANVAS -->
+  <canvas id="gameCanvas"></canvas>
 
-<script src="script.js" defer></script>
+  <script src="script.js"></script>
 </body>
 </html>
