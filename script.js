@@ -1,114 +1,168 @@
+/* ===============================
+   SOLVABLE FULLSCREEN MAZE
+   SMOOTH SPERM MOVEMENT
+================================ */
+
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
-
-const startScreen = document.getElementById("startScreen");
-const startBtn = document.getElementById("startBtn");
-const questionScreen = document.getElementById("questionScreen");
-const questionText = document.getElementById("questionText");
-const answersDiv = document.getElementById("answers");
-const flappyIntro = document.getElementById("flappyIntro");
 
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
 
-let stage = "start";
-let timer = 120;
-let questionIndex = 0;
+let stage = "maze";
 
-/* ---------- START ---------- */
-startBtn.onclick = () => {
-  startScreen.style.display = "none";
-  canvas.style.display = "block";
-  stage = "maze";
-  startMaze();
-};
+/* ---------- MAZE SETTINGS ---------- */
+const COLS = 31;   // odd numbers = better mazes
+const ROWS = 21;
+const CELL = Math.floor(Math.min(
+  canvas.width / COLS,
+  canvas.height / ROWS
+));
 
-/* ---------- MAZE ---------- */
-const maze = [
-  "########################",
-  "#S   #       #        E#",
-  "### ### ##### ### ######",
-  "#     #     #     #    #",
-  "# ##### ### ##### #### #",
-  "#       #   #          #",
-  "########################"
-];
+const offsetX = (canvas.width - COLS * CELL) / 2;
+const offsetY = (canvas.height - ROWS * CELL) / 2;
 
-const cellSize = 60;
-let sperm = { x: 1, y: 1 };
+/* ---------- MAZE GENERATION (DFS) ---------- */
+let maze = Array.from({ length: ROWS }, () =>
+  Array(COLS).fill(1)
+);
 
-function startMaze() {
-  drawMaze();
-  document.addEventListener("keydown", moveSperm);
+function carve(x, y) {
+  const dirs = [
+    [2,0], [-2,0], [0,2], [0,-2]
+  ].sort(() => Math.random() - 0.5);
+
+  maze[y][x] = 0;
+
+  for (let [dx, dy] of dirs) {
+    let nx = x + dx;
+    let ny = y + dy;
+
+    if (
+      ny > 0 && ny < ROWS - 1 &&
+      nx > 0 && nx < COLS - 1 &&
+      maze[ny][nx] === 1
+    ) {
+      maze[y + dy/2][x + dx/2] = 0;
+      carve(nx, ny);
+    }
+  }
 }
 
+carve(1,1);
+maze[1][1] = 2;                       // START
+maze[ROWS-2][COLS-2] = 3;             // END
+
+/* ---------- SPERM (PIXEL MOVEMENT) ---------- */
+let sperm = {
+  x: offsetX + CELL + CELL/2,
+  y: offsetY + CELL + CELL/2,
+  r: CELL * 0.25,
+  speed: 6,
+  vx: 0,
+  vy: 0
+};
+
+const keys = {};
+
+/* ---------- INPUT ---------- */
+document.addEventListener("keydown", e => keys[e.key] = true);
+document.addEventListener("keyup", e => keys[e.key] = false);
+
+/* ---------- COLLISION ---------- */
+function wallAt(px, py) {
+  let cx = Math.floor((px - offsetX) / CELL);
+  let cy = Math.floor((py - offsetY) / CELL);
+  return maze[cy]?.[cx] === 1;
+}
+
+/* ---------- UPDATE ---------- */
+function update() {
+  sperm.vx = sperm.vy = 0;
+  if (keys.ArrowUp) sperm.vy = -sperm.speed;
+  if (keys.ArrowDown) sperm.vy = sperm.speed;
+  if (keys.ArrowLeft) sperm.vx = -sperm.speed;
+  if (keys.ArrowRight) sperm.vx = sperm.speed;
+
+  let nx = sperm.x + sperm.vx;
+  let ny = sperm.y + sperm.vy;
+
+  if (!wallAt(nx, sperm.y)) sperm.x = nx;
+  if (!wallAt(sperm.x, ny)) sperm.y = ny;
+
+  // END CHECK
+  let endX = offsetX + (COLS-2)*CELL;
+  let endY = offsetY + (ROWS-2)*CELL;
+  if (
+    Math.abs(sperm.x - (endX + CELL/2)) < CELL/2 &&
+    Math.abs(sperm.y - (endY + CELL/2)) < CELL/2
+  ) {
+    stage = "questions";
+    canvas.style.display = "none";
+    startQuestions(); // your existing function
+    return;
+  }
+}
+
+/* ---------- DRAW ---------- */
 function drawMaze() {
   ctx.clearRect(0,0,canvas.width,canvas.height);
-  const offsetX = (canvas.width - maze[0].length * cellSize)/2;
-  const offsetY = (canvas.height - maze.length * cellSize)/2;
 
-  for (let y=0;y<maze.length;y++){
-    for (let x=0;x<maze[y].length;x++){
-      if (maze[y][x] === "#"){
-        ctx.fillStyle = "#1e4fa3";
-        ctx.fillRect(offsetX+x*cellSize, offsetY+y*cellSize, cellSize, cellSize);
+  for (let y=0;y<ROWS;y++){
+    for (let x=0;x<COLS;x++){
+      if (maze[y][x] === 1) {
+        ctx.fillStyle = "#1f4fd8";
+        ctx.fillRect(
+          offsetX + x*CELL,
+          offsetY + y*CELL,
+          CELL, CELL
+        );
       }
-      if (maze[y][x] === "E"){
+      if (maze[y][x] === 3) {
         ctx.fillStyle = "gold";
-        ctx.fillRect(offsetX+x*cellSize, offsetY+y*cellSize, cellSize, cellSize);
+        ctx.fillRect(
+          offsetX + x*CELL,
+          offsetY + y*CELL,
+          CELL, CELL
+        );
       }
     }
   }
-
-  drawSperm(offsetX, offsetY);
 }
 
-function drawSperm(ox, oy) {
+function drawSperm() {
+  // head
   ctx.fillStyle = "white";
   ctx.beginPath();
-  ctx.arc(
-    ox + sperm.x*cellSize + cellSize/2,
-    oy + sperm.y*cellSize + cellSize/2,
-    cellSize/4,
-    0,
-    Math.PI*2
-  );
+  ctx.arc(sperm.x, sperm.y, sperm.r, 0, Math.PI*2);
   ctx.fill();
 
+  // animated tail
   ctx.strokeStyle = "white";
+  ctx.lineWidth = 2;
   ctx.beginPath();
-  ctx.moveTo(
-    ox + sperm.x*cellSize,
-    oy + sperm.y*cellSize + cellSize/2
-  );
+
+  let wiggle = Math.sin(Date.now()/100) * 10;
+  ctx.moveTo(sperm.x - sperm.r, sperm.y);
   ctx.lineTo(
-    ox + sperm.x*cellSize - 30,
-    oy + sperm.y*cellSize + cellSize/2 + Math.sin(Date.now()/100)*10
+    sperm.x - sperm.r - 30,
+    sperm.y + wiggle
   );
   ctx.stroke();
 }
 
-function moveSperm(e){
-  let dx=0, dy=0;
-  if(e.key==="ArrowUp") dy=-1;
-  if(e.key==="ArrowDown") dy=1;
-  if(e.key==="ArrowLeft") dx=-1;
-  if(e.key==="ArrowRight") dx=1;
-
-  if(maze[sperm.y+dy][sperm.x+dx] !== "#"){
-    sperm.x += dx;
-    sperm.y += dy;
-  }
-
-  if(maze[sperm.y][sperm.x]==="E"){
-    document.removeEventListener("keydown", moveSperm);
-    canvas.style.display="none";
-    startQuestions();
-    return;
-  }
-
+/* ---------- LOOP ---------- */
+function loop() {
+  if (stage !== "maze") return;
+  update();
   drawMaze();
+  drawSperm();
+  requestAnimationFrame(loop);
 }
+
+canvas.style.display = "block";
+loop();
+
 
 /* ---------- QUESTIONS ---------- */
 const questions = [
