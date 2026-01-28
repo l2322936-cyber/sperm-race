@@ -1,51 +1,178 @@
-html, body {
+/* =====================
+   GLOBAL RESET
+===================== */
+* {
   margin: 0;
   padding: 0;
-  background: #0a3cff;
-  color: white;
-  font-family: Arial, sans-serif;
-  overflow: hidden;
+  box-sizing: border-box;
+  font-family: Arial, Helvetica, sans-serif;
 }
 
+html, body {
+  width: 100%;
+  height: 100%;
+  background: #0a3cff;
+  overflow: hidden;
+  color: white;
+}
+
+/* =====================
+   SCREEN SYSTEM
+===================== */
 .screen {
-  display: none;
   position: absolute;
   inset: 0;
-  background: #0a3cff;
-  text-align: center;
-  padding-top: 8vh;
-}
-
-h1 {
-  font-size: 4rem;
-}
-
-input {
-  font-size: 2rem;
-  padding: 15px;
-  width: 60%;
-  margin: 20px;
-}
-
-button {
-  font-size: 2rem;
-  padding: 15px 40px;
-  cursor: pointer;
-}
-
-canvas {
   display: none;
-  background: #d6f2ff;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  background: #0a3cff;
+  padding: 40px;
 }
 
-.answer {
-  display: block;
-  width: 90%;
-  margin: 20px auto;
-  padding: 30px;
+.screen.active {
+  display: flex;
+}
+
+/* =====================
+   START SCREEN
+===================== */
+#startScreen .title {
+  font-size: 5rem;
+  margin-bottom: 40px;
+}
+
+#nameInput {
+  width: 60%;
+  max-width: 600px;
+  padding: 25px;
   font-size: 2rem;
-  background: white;
-  color: black;
+  text-align: center;
+  border-radius: 12px;
   border: none;
+  margin-bottom: 30px;
+}
+
+#startBtn {
+  padding: 20px 60px;
+  font-size: 2rem;
+  border: none;
+  border-radius: 12px;
+  background: #ffffff;
+  color: #0a3cff;
   cursor: pointer;
+  margin-bottom: 40px;
+}
+
+#startBtn:hover {
+  background: #e6e6e6;
+}
+
+#startScreen h2 {
+  font-size: 2.5rem;
+  margin-bottom: 15px;
+}
+
+#board {
+  list-style: none;
+  font-size: 1.8rem;
+}
+
+#board li {
+  margin: 8px 0;
+}
+
+/* =====================
+   CANVAS (MAZE + FLAPPY)
+===================== */
+#game {
+  position: absolute;
+  inset: 0;
+  display: none;
+  background: #3fa9f5; /* light blue corridors */
+}
+
+/* =====================
+   QUESTIONS SCREEN
+===================== */
+#questions {
+  background: #0a3cff;
+}
+
+#qText {
+  font-size: 3rem;
+  margin-bottom: 60px;
+  max-width: 1200px;
+}
+
+#answers {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 25px;
+}
+
+#answers button {
+  padding: 30px;
+  font-size: 2.2rem;
+  border-radius: 14px;
+  border: none;
+  background: #ffffff;
+  color: #0a3cff;
+  cursor: pointer;
+}
+
+#answers button:hover {
+  background: #e6e6e6;
+}
+
+/* =====================
+   FLAPPY INTRO
+===================== */
+#flappyIntro h1 {
+  font-size: 4rem;
+  margin-bottom: 30px;
+}
+
+#flappyIntro p {
+  font-size: 2rem;
+  line-height: 1.5;
+}
+
+/* =====================
+   END SCREEN
+===================== */
+#endScreen h1 {
+  font-size: 4rem;
+  margin-bottom: 20px;
+}
+
+#finalTime {
+  font-size: 2.5rem;
+  margin-bottom: 30px;
+}
+
+#finalBoard {
+  list-style: none;
+  font-size: 2rem;
+  margin-bottom: 40px;
+}
+
+#finalBoard li {
+  margin: 10px 0;
+}
+
+#restartBtn {
+  padding: 20px 60px;
+  font-size: 2rem;
+  border-radius: 12px;
+  border: none;
+  background: white;
+  color: #0a3cff;
+  cursor: pointer;
+}
+
+#restartBtn:hover {
+  background: #e6e6e6;
 }
