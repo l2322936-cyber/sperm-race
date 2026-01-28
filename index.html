@@ -1,55 +1,43 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8">
   <title>Sperm Race</title>
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-<!-- START SCREEN -->
-<div id="start" class="screen active">
-  <h1>Sperm Race</h1>
-  <input
-  id="nameInput"
-  type="text"
-  placeholder="Enter your name"
-  style="
-    width: 60%;
-    height: 60px;
-    font-size: 28px;
-    text-align: center;
-    border-radius: 12px;
-    margin: 20px 0;
-  "
-> 
-  <h2>🏆 Leaderboard</h2>
-<ul id="startBoard" style="font-size:22px; list-style:none; padding:0;"></ul>
-  <button onclick="startGame()">Start</button>
+<div id="startScreen" class="screen">
+  <h1>Sperm Race 🧬</h1>
+  <input id="playerName" placeholder="ENTER YOUR NAME">
+  <button id="startBtn">START</button>
+  <h2>Leaderboard</h2>
+  <ul id="leaderboard"></ul>
 </div>
 
-<!-- QUESTIONS -->
-<div id="questions" class="screen">
-  <h2 id="qText"></h2>
+<canvas id="gameCanvas"></canvas>
+
+<div id="questionScreen" class="screen hidden">
+  <h2 id="questionText"></h2>
   <div id="answers"></div>
 </div>
 
-<!-- FLAPPY INFO -->
-<div id="flappyInfo" class="screen">
+<div id="flappyIntro" class="screen hidden">
   <h1>Flappy Sperm</h1>
-  <p>The longer you survive, the more time is removed.</p>
-  <p><b>Press ↑ to begin</b></p>
+  <p>
+    Use the ↑ arrow to fly.<br>
+    The longer you survive, the more time you lose.<br><br>
+    <strong>Once you click the UP arrow, the game will begin.</strong>
+  </p>
 </div>
 
-<!-- END -->
-<div id="end" class="screen">
+<div id="endScreen" class="screen hidden">
   <h1>Finished!</h1>
-  <p id="finalTime"></p>
+  <h2>Leaderboard</h2>
+  <ul id="finalBoard"></ul>
   <button onclick="location.reload()">Restart</button>
 </div>
 
-<canvas id="game"></canvas>
-<canvas id="flappyCanvas"></canvas>
 <script src="script.js"></script>
 </body>
 </html>
