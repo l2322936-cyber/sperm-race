@@ -1,53 +1,30 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8" />
   <title>Race to Life</title>
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="style.css">
   <script src="script.js" defer></script>
 </head>
 <body>
 
-  <!-- START SCREEN -->
-  <div id="startScreen" class="screen active">
-    <h1 id="gameTitle">RACE TO LIFE</h1>
+<div id="startScreen" class="screen active">
+  <h1>RACE TO LIFE</h1>
+  <input id="playerNameInput" placeholder="Enter name">
+  <button id="startBtn">START</button>
+</div>
 
-    <input
-      type="text"
-      id="playerNameInput"
-      placeholder="Enter your name"
-      maxlength="12"
-    />
+<div id="mazeScreen" class="screen">
+  <canvas id="mazeCanvas"></canvas>
+</div>
 
-    <button id="startBtn">START</button>
+<div id="questionScreen" class="screen">
+  <h2 id="questionText"></h2>
+  <div id="answers"></div>
+</div>
 
-    <div id="leaderboard">
-      <h2>Leaderboard</h2>
-      <ol id="leaderboardList"></ol>
-    </div>
-  </div>
-
-  <!-- MAZE SCREEN -->
-  <div id="mazeScreen" class="screen">
-    <canvas id="mazeCanvas"></canvas>
-  </div>
-
-  <!-- QUESTIONS SCREEN -->
-  <div id="questionScreen" class="screen">
-    <div id="questionBox">
-      <h2 id="questionText"></h2>
-      <div id="answers"></div>
-    </div>
-  </div>
-
-  <!-- FLAPPY SPERM SCREEN -->
-  <div id="flappyScreen" class="screen">
-    <div id="flappyUI">
-      <p>Press SPACE to swim</p>
-      <p id="timer">Time: 60</p>
-    </div>
-    <canvas id="flappyCanvas"></canvas>
-  </div>
+<div id="flappyScreen" class="screen">
+  <canvas id="flappyCanvas"></canvas>
+</div>
 
 </body>
 </html>
