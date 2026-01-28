@@ -1,16 +1,10 @@
-* {
-  box-sizing: border-box;
-  font-family: Arial, Helvetica, sans-serif;
-}
-
 body {
   margin: 0;
   background: #0a3d62;
   color: white;
-  overflow: hidden;
+  font-family: Arial;
 }
 
-/* Shared screen behavior */
 .screen {
   display: none;
   width: 100vw;
@@ -19,98 +13,11 @@ body {
 
 .screen.active {
   display: flex;
-}
-
-/* START SCREEN */
-#startScreen {
-  flex-direction: column;
-  align-items: center;
   justify-content: center;
-  gap: 20px;
-}
-
-#gameTitle {
-  font-size: 4rem;
-  letter-spacing: 4px;
-}
-
-#playerNameInput {
-  padding: 12px;
-  font-size: 1.2rem;
-  width: 260px;
-  text-align: center;
-  border-radius: 6px;
-  border: none;
-}
-
-#startBtn {
-  padding: 14px 40px;
-  font-size: 1.3rem;
-  background: #1dd1a1;
-  color: #000;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-}
-
-#startBtn:hover {
-  background: #10ac84;
-}
-
-#leaderboard {
-  margin-top: 30px;
-}
-
-#leaderboard h2 {
-  margin-bottom: 10px;
-}
-
-/* MAZE */
-#mazeScreen {
   align-items: center;
-  justify-content: center;
-}
-
-#mazeCanvas {
-  background: #000;
-}
-
-/* QUESTIONS */
-#questionScreen {
-  align-items: center;
-  justify-content: center;
-}
-
-#questionBox {
-  background: rgba(0,0,0,0.6);
-  padding: 40px;
-  border-radius: 12px;
-  max-width: 800px;
-  text-align: center;
-}
-
-#answers button {
-  display: block;
-  margin: 15px auto;
-  padding: 14px;
-  width: 100%;
-  font-size: 1.1rem;
-  cursor: pointer;
-}
-
-/* FLAPPY SPERM */
-#flappyScreen {
   flex-direction: column;
 }
 
-#flappyUI {
-  display: flex;
-  justify-content: space-between;
-  padding: 10px 20px;
-}
-
-#flappyCanvas {
-  flex: 1;
-  background: #000;
+canvas {
   display: block;
 }
