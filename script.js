@@ -13,29 +13,40 @@ let time = 0;
 let timer = null;
 
 /* =========================
-   LEADERBOARD
+   LEADERBOARD (FIXED)
 ========================= */
-function getBoard() {
-  return JSON.parse(localStorage.getItem("spermBoard") || "[]");
+
+let playerName = "";
+
+function saveScore(name, time) {
+  const scores =
+    JSON.parse(localStorage.getItem("spermLeaderboard")) || [];
+
+  scores.push({ name, time });
+
+  scores.sort((a, b) => a.time - b.time);
+
+  localStorage.setItem(
+    "spermLeaderboard",
+    JSON.stringify(scores.slice(0, 5))
+  );
 }
 
-function saveScore(name, t) {
-  const b = getBoard();
-  b.push({ name, t });
-  b.sort((a, b) => a.t - b.t);
-  localStorage.setItem("spermBoard", JSON.stringify(b.slice(0, 5)));
-}
+function renderLeaderboard() {
+  const list = document.getElementById("leaderboard");
+  if (!list) return;
 
-function renderBoard(el) {
-  el.innerHTML = "";
-  getBoard().forEach(s => {
+  list.innerHTML = "";
+
+  const scores =
+    JSON.parse(localStorage.getItem("spermLeaderboard")) || [];
+
+  scores.forEach(s => {
     const li = document.createElement("li");
-    li.textContent = `${s.name} — ${s.t}s`;
-    el.appendChild(li);
+    li.textContent = `${s.name} — ${s.time}s`;
+    list.appendChild(li);
   });
 }
-
-renderBoard(document.getElementById("board"));
 
 /* =========================
    START SCREEN
