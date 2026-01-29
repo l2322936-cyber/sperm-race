@@ -16,8 +16,6 @@ let timer = null;
    LEADERBOARD (FIXED)
 ========================= */
 
-let playerName = "";
-
 function saveScore(name, time) {
   const scores =
     JSON.parse(localStorage.getItem("spermLeaderboard")) || [];
@@ -505,7 +503,7 @@ function endGame(){
   saveScore(playerName,time);
    renderLeaderboard();
   document.getElementById("finalTime").textContent=`Time: ${time}s`;
-  renderBoard(document.getElementById("finalBoard"));
+  renderLeaderboard();
   document.getElementById("endScreen").classList.add("active");
 }
 
