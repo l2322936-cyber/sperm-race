@@ -319,7 +319,6 @@ function showQuestion() {
 function endQuestions() {
   document.getElementById("questions").classList.remove("active");
   startFlappyIntro();
-  drawFlappyIntro();
 }
 /* =====================
    FLAPPY SPERM (FIXED)
