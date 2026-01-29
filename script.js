@@ -503,6 +503,7 @@ function endGame(){
   stage="end";
   canvas.style.display="none";
   saveScore(playerName,time);
+   renderLeaderboard();
   document.getElementById("finalTime").textContent=`Time: ${time}s`;
   renderBoard(document.getElementById("finalBoard"));
   document.getElementById("endScreen").classList.add("active");
