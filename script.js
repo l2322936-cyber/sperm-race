@@ -320,131 +320,99 @@ function endQuestions() {
   document.getElementById("questions").classList.remove("active");
   startFlappyIntro();
 }
-/* =====================
-   FLAPPY SPERM (FIXED)
-===================== */
-
-let flappyActive = false;
-let flappyIntro = true;
+/* =========================
+   FLAPPY SPERM (PIPE FIXED)
+========================= */
 
 let flappyY;
 let flappyVY;
 let flappyPipes = [];
+let flappyStarted = false;
+let flappyLastTime = Date.now();
 
 const PIPE_WIDTH = 60;
-const PIPE_GAP = 260;
-const PIPE_SPACING = 320;
-
-/* ---------- START FLAPPY ---------- */
+const PIPE_GAP = 260;          // LARGE, safe gap
+const PIPE_SPACING = 340;     // distance between pipes
+const PIPE_SPEED = 4;
 
 function startFlappyIntro() {
   stage = "flappyIntro";
-  flappyIntro = true;
-  flappyActive = false;
+  canvas.style.display = "block";
+  flappyStarted = false;
 
   flappyY = canvas.height / 2;
   flappyVY = 0;
   flappyPipes = [];
+  flappyLastTime = Date.now();
 
-  flappyRender();
+  flappyIntroLoop();
 }
 
-function startFlappyGame() {
-  stage = "flappy";
-  flappyIntro = false;
-  flappyActive = true;
+function flappyIntroLoop() {
+  if (stage !== "flappyIntro") return;
 
-  flappyVY = -6; // immediate lift so it never dies instantly
-  flappyLoop();
+  ctx.fillStyle = "#5bbcff";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  ctx.fillStyle = "white";
+  ctx.textAlign = "center";
+
+  ctx.font = "52px Arial";
+  ctx.fillText("Flappy Sperm", canvas.width / 2, canvas.height / 2 - 80);
+
+  ctx.font = "26px Arial";
+  ctx.fillText(
+    "Use the ↑ arrow to fly",
+    canvas.width / 2,
+    canvas.height / 2 - 10
+  );
+  ctx.fillText(
+    "Once you press ↑, the game begins",
+    canvas.width / 2,
+    canvas.height / 2 + 30
+  );
+
+  requestAnimationFrame(flappyIntroLoop);
 }
 
 /* ---------- CONTROLS ---------- */
 
 document.addEventListener("keydown", e => {
-  if (stage === "flappyIntro" && e.key === "ArrowUp") {
-    startFlappyGame();
-  }
-
-  if (stage === "flappy" && e.key === "ArrowUp") {
-    flappyVY = -7;
-  }
-});
-
-/* ---------- DRAW SPERM ---------- */
-
-function drawFlappySperm(x, y) {
-  ctx.fillStyle = "#ffffff";
-
-  ctx.beginPath();
-  ctx.ellipse(x, y, 14, 9, 0, 0, Math.PI * 2);
-  ctx.fill();
-
-  ctx.strokeStyle = "#ffffff";
-  ctx.lineWidth = 2;
-  ctx.beginPath();
-  ctx.moveTo(x - 14, y);
-  ctx.lineTo(x - 32, y + Math.sin(Date.now() / 120) * 6);
-  ctx.stroke();
-}
-
-/* ---------- RENDER ---------- */
-
-function flappyRender() {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-  ctx.fillStyle = "#7fbfff";
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  if (e.key !== "ArrowUp") return;
 
   if (stage === "flappyIntro") {
-    ctx.fillStyle = "#ffffff";
-    ctx.font = "48px Arial";
-    ctx.textAlign = "center";
-    ctx.fillText("FLAPPY SPERM", canvas.width / 2, canvas.height / 2 - 80);
-
-    ctx.font = "24px Arial";
-    ctx.fillText(
-      "Survive to remove time from your score.",
-      canvas.width / 2,
-      canvas.height / 2 - 20
-    );
-    ctx.fillText(
-      "Press ↑ to begin",
-      canvas.width / 2,
-      canvas.height / 2 + 40
-    );
-
-    requestAnimationFrame(flappyRender);
+    stage = "flappy";
+    flappyStarted = true;
+    flappyLastTime = Date.now();
+    flappyLoop();
+    return;
   }
-}
+
+  if (stage === "flappy") {
+    flappyVY = -9;
+  }
+});
 
 /* ---------- GAME LOOP ---------- */
 
 function flappyLoop() {
-  if (!flappyActive) return;
+  if (stage !== "flappy") return;
 
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  ctx.fillStyle = "#7fbfff";
+  ctx.fillStyle = "#5bbcff";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-  // physics
-  flappyVY += 0.4;
+  // gravity
+  flappyVY += 0.45;
   flappyY += flappyVY;
 
-  // clamp so it never vanishes instantly
-  flappyY = Math.max(20, Math.min(canvas.height - 20, flappyY));
-
-  // time reward
-  if (Date.now() % 2000 < 20) {
-    time = Math.max(0, time - 1);
-  }
-
-  // spawn pipes safely
+  // spawn pipes ONLY if spaced far enough
   if (
     flappyPipes.length === 0 ||
-    flappyPipes[flappyPipes.length - 1].x < canvas.width - PIPE_SPACING
+    flappyPipes[flappyPipes.length - 1].x <
+      canvas.width - PIPE_SPACING
   ) {
     const gapTop =
-      150 + Math.random() * (canvas.height - PIPE_GAP - 300);
+      140 + Math.random() * (canvas.height - PIPE_GAP - 280);
 
     flappyPipes.push({
       x: canvas.width,
@@ -452,9 +420,10 @@ function flappyLoop() {
     });
   }
 
+  // draw pipes
   ctx.fillStyle = "#0a3d91";
   flappyPipes.forEach(p => {
-    p.x -= 3.5;
+    p.x -= PIPE_SPEED;
 
     ctx.fillRect(p.x, 0, PIPE_WIDTH, p.gap);
     ctx.fillRect(
@@ -463,23 +432,57 @@ function flappyLoop() {
       PIPE_WIDTH,
       canvas.height
     );
+  });
 
-    // collision
+  drawFlappySperm();
+
+  // collisions
+  flappyPipes.forEach(p => {
     if (
-      150 + 14 > p.x &&
-      150 - 14 < p.x + PIPE_WIDTH &&
+      140 + 14 > p.x &&
+      140 - 14 < p.x + PIPE_WIDTH &&
       (flappyY - 9 < p.gap ||
         flappyY + 9 > p.gap + PIPE_GAP)
     ) {
-      flappyActive = false;
       endGame();
     }
   });
 
-  drawFlappySperm(150, flappyY);
+  // out of bounds
+  if (flappyY < 0 || flappyY > canvas.height) {
+    endGame();
+  }
+
+  // time reduction (every 2s = -1s)
+  if (Date.now() - flappyLastTime >= 2000) {
+    time = Math.max(0, time - 1);
+    flappyLastTime = Date.now();
+  }
 
   requestAnimationFrame(flappyLoop);
 }
+
+/* ---------- SPERM DRAW ---------- */
+
+function drawFlappySperm() {
+  const x = 140;
+
+  ctx.fillStyle = "white";
+  ctx.beginPath();
+  ctx.ellipse(x, flappyY, 14, 9, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.strokeStyle = "white";
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(x - 14, flappyY);
+  ctx.lineTo(
+    x - 34,
+    flappyY + Math.sin(Date.now() / 120) * 7
+  );
+  ctx.stroke();
+}
+
 
 /* =========================
    END
