@@ -320,118 +320,141 @@ function endQuestions() {
   document.getElementById("questions").classList.remove("active");
   startFlappyIntro();
 }
+/* =========================
+   FLAPPY SPERM (FULL FIX)
+========================= */
 
-// ---------- FLAPPY ----------
-let flappyY, flappyVy;
+let flappyY;
+let flappyVY;
+let flappyPipes = [];
 let flappyStarted = false;
-let pipes = [];
-let flappyTimer = 0;
+let flappyLastTime = Date.now();
 
-function startFlappy() {
+function startFlappyIntro() {
   stage = "flappyIntro";
   canvas.style.display = "block";
+  flappyStarted = false;
 
   flappyY = canvas.height / 2;
-  flappyVy = 0;
-  pipes = [];
-  flappyStarted = false;
-  flappyTimer = 0;
+  flappyVY = 0;
+  flappyPipes = [];
+  flappyLastTime = Date.now();
 
-  flappyLoop();
+  flappyIntroLoop();
+}
+
+function flappyIntroLoop() {
+  if (stage !== "flappyIntro") return;
+
+  ctx.fillStyle = "#5bbcff"; // light blue
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  ctx.fillStyle = "white";
+  ctx.textAlign = "center";
+
+  ctx.font = "52px Arial";
+  ctx.fillText("Flappy Sperm", canvas.width / 2, canvas.height / 2 - 80);
+
+  ctx.font = "26px Arial";
+  ctx.fillText(
+    "Use the ↑ arrow to fly",
+    canvas.width / 2,
+    canvas.height / 2 - 10
+  );
+  ctx.fillText(
+    "Once you press ↑, the game begins",
+    canvas.width / 2,
+    canvas.height / 2 + 30
+  );
+
+  requestAnimationFrame(flappyIntroLoop);
 }
 
 document.addEventListener("keydown", e => {
   if (e.key !== "ArrowUp") return;
 
+  // start flappy
   if (stage === "flappyIntro") {
-    stage = "flappyPlaying";
+    stage = "flappy";
     flappyStarted = true;
-    flappyVy = -9;
-  } 
-  else if (stage === "flappyPlaying") {
-    flappyVy = -9;
+    flappyLastTime = Date.now();
+    flappyLoop();
+    return;
+  }
+
+  // flap
+  if (stage === "flappy") {
+    flappyVY = -9;
   }
 });
 
 function flappyLoop() {
-  if (stage !== "flappyIntro" && stage !== "flappyPlaying") return;
+  if (stage !== "flappy") return;
 
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-  // background
-  ctx.fillStyle = "#3fa9f5";
+  ctx.fillStyle = "#5bbcff";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-  // instructions
-  if (stage === "flappyIntro") {
-    ctx.fillStyle = "white";
-    ctx.font = "48px Arial";
-    ctx.fillText("Flappy Sperm", canvas.width / 2 - 160, canvas.height / 2 - 80);
-    ctx.font = "26px Arial";
-    ctx.fillText(
-      "Press ↑ to start. Each 2 seconds = -1 time",
-      canvas.width / 2 - 300,
-      canvas.height / 2
-    );
+  // gravity
+  flappyVY += 0.45;
+  flappyY += flappyVY;
+
+  // pipes
+  if (Math.random() < 0.02) {
+    flappyPipes.push({
+      x: canvas.width,
+      gap: 180 + Math.random() * (canvas.height - 360)
+    });
   }
 
-  // physics
-  if (stage === "flappyPlaying") {
-    flappyVy += 0.5;
-    flappyY += flappyVy;
-
-    flappyTimer++;
-    if (flappyTimer % 120 === 0) time--; // every 2 seconds
-  }
-
-  // spawn pipes
-  if (stage === "flappyPlaying" && Math.random() < 0.02) {
-    const gap = 200;
-    const top = 100 + Math.random() * (canvas.height - gap - 200);
-    pipes.push({ x: canvas.width, top });
-  }
-
-  // draw pipes
-  ctx.fillStyle = "#0a3cff";
-  pipes.forEach(p => {
+  ctx.fillStyle = "#0a3d91"; // dark blue
+  flappyPipes.forEach(p => {
     p.x -= 4;
-    ctx.fillRect(p.x, 0, 60, p.top);
-    ctx.fillRect(p.x, p.top + 200, 60, canvas.height);
+    ctx.fillRect(p.x, 0, 60, p.gap - 130);
+    ctx.fillRect(p.x, p.gap + 130, 60, canvas.height);
   });
 
-  // collision
-  pipes.forEach(p => {
+  drawFlappySperm();
+
+  // collisions
+  flappyPipes.forEach(p => {
     if (
-      120 > p.x && 120 < p.x + 60 &&
-      (flappyY < p.top || flappyY > p.top + 200)
+      p.x < 150 &&
+      p.x + 60 > 120 &&
+      (flappyY < p.gap - 130 || flappyY > p.gap + 130)
     ) {
       endGame();
     }
   });
 
-  if (flappyY < 0 || flappyY > canvas.height) endGame();
+  if (flappyY < 0 || flappyY > canvas.height) {
+    endGame();
+  }
 
-  drawFlappySperm(120, flappyY);
+  // time reduction
+  if (Date.now() - flappyLastTime >= 2000) {
+    time -= 1;
+    flappyLastTime = Date.now();
+  }
 
   requestAnimationFrame(flappyLoop);
 }
 
-/* =====================
-   DRAW FLAPPY SPERM
-===================== */
-function drawFlappySperm(x, y) {
-  // head
+function drawFlappySperm() {
+  const x = 140;
+
   ctx.fillStyle = "white";
   ctx.beginPath();
-  ctx.ellipse(x, y, 14, 10, 0, 0, Math.PI * 2);
+  ctx.ellipse(x, flappyY, 14, 9, 0, 0, Math.PI * 2);
   ctx.fill();
 
-  // tail
   ctx.strokeStyle = "white";
-  ctx.lineWidth = 3;
+  ctx.lineWidth = 2;
   ctx.beginPath();
-  ctx.moveTo(x - 14, y);
-  ctx.lineTo(x - 30, y + Math.sin(Date.now() / 100) * 6);
+  ctx.moveTo(x - 14, flappyY);
+  ctx.lineTo(
+    x - 34,
+    flappyY + Math.sin(Date.now() / 120) * 7
+  );
   ctx.stroke();
 }
 
